@@ -1,19 +1,22 @@
 # sumo-backend
 
-Steps to get up and running--
+## Steps to get up and running
 
-1. Create a MySql database named "sumo"
+1. Create a MySql database named `sumo`
 
 2. Create the following tables:
 
-CREATE TABLE `rikishi` (
+```
+ CREATE TABLE `rikishi` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(255) DEFAULT NULL,
   `image` varchar(255) DEFAULT NULL,
   `name_ja` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=114 DEFAULT CHARSET=utf8;
+```
 
+```
 CREATE TABLE `bout` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `east` varchar(255) DEFAULT NULL,
@@ -27,13 +30,14 @@ CREATE TABLE `bout` (
   `month` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4538 DEFAULT CHARSET=utf8;
+```
 
-3. Open lein repl from the root of this project
+3. Open `lein repl` from the root of this project
 
 4. Run this in the repl to populate your database:
-   (load-file "./src/sumo_backend/process_json.clj")
+   `(load-file "./src/sumo_backend/process_json.clj")`
 
-5. From the root of the project run: lein ring server-headless
+5. From the root of the project run: `lein ring server-headless`
    to start the api
 
 ## Prerequisites

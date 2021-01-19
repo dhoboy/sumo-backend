@@ -35,7 +35,9 @@ CREATE TABLE `bout` (
 3. Open `lein repl` from the root of this project
 
 4. Run this in the repl to populate your database:
-   `(load-file "./src/sumo_backend/process_json.clj")`
+   ```
+   (load-file "./src/sumo_backend/process_json.clj")
+   ```
 
 5. From the root of the project run: `lein ring server-headless`
    to start the api

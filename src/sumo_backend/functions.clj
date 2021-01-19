@@ -3,8 +3,8 @@
 
 (def mysql-db {:dbtype "mysql"
                :dbname "sumo"
-               :user "fill-me-in"
-               :password "fill-me-in"})
+               :user "FILL-ME-IN"
+               :password "FILL-ME-IN"})
 
 (defn get-rikishi
   "gets rikihsi record specified by passed in name"

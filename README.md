@@ -31,6 +31,9 @@ CREATE TABLE `bout` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4538 DEFAULT CHARSET=utf8;
 ```
+3. Open up `/src/functions.clj` and `/src/process_json.clj` 
+   and fill in your database credentials in the
+   `(def mysql-db ...` binding
 
 3. Open `lein repl` from the root of this project
 

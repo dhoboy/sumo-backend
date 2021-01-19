@@ -1,6 +1,6 @@
 ; load the repl from the root of the project directory
 ; run this file in the repl to populate the database
-; nb: day15__09_2019 has a takakeisho and mitakeumi playoff
+; n.b.: day15__09_2019 has a takakeisho and mitakeumi playoff
 
 ; (load-file "./src/sumo_backend/process_json.clj")
 (ns sumo-backend.process-json)
@@ -9,8 +9,8 @@
 
 (def mysql-db {:dbtype "mysql"
                :dbname "sumo"
-               :user "fill-me-in"
-               :password "fill-me-in"})
+               :user "FILL-ME-IN"
+               :password "FILL-ME-IN"})
 
 (defn write-rikishi
   "write rikishi info to the database"

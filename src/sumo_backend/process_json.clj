@@ -1,11 +1,58 @@
+;; TODO Make a main function
+;; If you specify a main namespace like sumo-backend.core,
+;; lein will import its dependencies when you start the repl.
+;; E.g.:
+;; core ns: https://github.com/bslawski/clj-ml/blob/master/src/clj_ml/core.clj
+;; project.clj: https://github.com/bslawski/clj-ml/blob/master/project.clj
+
 ; load the repl from the root of the project directory
 ; run this file in the repl to populate the database
 ; n.b.: day15__09_2019 has a takakeisho and mitakeumi playoff
 
 ; (load-file "./src/sumo_backend/process_json.clj")
+
 (ns sumo-backend.process-json)
 (require '[cheshire.core :refer :all]) ; parses json
 (require '[clojure.java.jdbc :as j])   ; writes to mysql
+
+
+
+;; TODO use a single namespace for DB functions
+;; Any DB config or interface should be in a single
+;; namespace, probably a renamed sumo-backend.functions
+;; This namespace would be for translating among
+;; JSON, hash-maps and lists of hash-maps formatted for MySQL,
+;; strings for saving to flatfiles, or any other formatting
+;; that needs to happen.
+;; Other namespaces would use this namespace to translate
+;; data read from multiple locations into whatever format
+;; is needed to process or write it.
+;; E.g.:
+;;
+;; sumo-backend.db ----------|
+;;                           |
+;; sumo-backend.data-format -|---> sumo-backend.predictor
+;;                           |
+;; sumo-backend.s3 ----------|
+;;
+;;
+;; To write a prediction report, the predictor ns would:
+;; - Call db to get the data that it needs
+;; - Call data-format to parse the DB data into a more usuable format
+;;   (parse timestamps from java.sql.Timestamp to simple-time.datetime,
+;;    parse JSON strings into hash-maps, etc)
+;; - Use the data to make some sort of prediction
+;; - Call data-format to turn the prediction data into a string
+;; - Pass that string to s3 to write as a flatfile
+;;
+;; There are different ways that could be organized
+;; (s3 could use data-format to stringify data, rather than expecting strings)
+;; but in general, there should be one namespace to interact with each resource,
+;; one namespace for each group of shared functions (string utils, math utils, etc),
+;; then higher-level namespaces that use those lower-level namespaces to do things.
+;; This way, if there is a bug with MySQL or you want to change DBs altogether,
+;; there is only one namespace to change.
+
 
 (def mysql-db {:dbtype "mysql"
                :dbname "sumo"

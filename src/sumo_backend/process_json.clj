@@ -53,11 +53,11 @@
 ;; This way, if there is a bug with MySQL or you want to change DBs altogether,
 ;; there is only one namespace to change.
 
-
-(def mysql-db {:dbtype "mysql"
-               :dbname "sumo"
-               :user "FILL-ME-IN"
-               :password "FILL-ME-IN"})
+(def mysql-db 
+  (:local 
+    (parse-string
+      (slurp "./keys/mysql.json")
+      true)))
 
 (defn write-rikishi
   "write rikishi info to the database"

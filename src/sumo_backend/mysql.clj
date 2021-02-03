@@ -1,8 +1,9 @@
 ;; TODO make this sumo-backend.mysql or sumo-backend.db
 ;; The namespace would handle all interactions with the DB,
 ;; and abstracts the underlying table structure.
-(ns sumo-backend.functions)
+(ns sumo-backend.mysql)
 (require '[clojure.java.jdbc :as j])
+(require '[cheshire.core :refer :all]) ; parses json
 
 
 ;; TODO read from config file / env vars
@@ -19,10 +20,11 @@
 ;;       (json/parse
 ;;         (slurp ...)
 ;;         true)))))
-(def mysql-db {:dbtype "mysql"
-               :dbname "sumo"
-               :user "FILL-ME-IN"
-               :password "FILL-ME-IN"})
+(def mysql-db 
+  (:local 
+    (parse-string
+      (slurp "./keys/mysql.json")
+      true)))
 
 ;; TODO use honeysql or similar to build SQL queries
 ;; Manually defining queries can get hard to debug

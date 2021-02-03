@@ -5,7 +5,23 @@
 (require '[ring.util.response :refer [response]])
 (require '[jumblerg.middleware.cors :refer [wrap-cors]])
 (require '[sumo-backend.functions :as func])
-  
+
+;; TODO some higher level organization, otherwise looks good
+;;
+;; I like the approach of using endpoint params instead of query params.
+;;
+;; You can nest all of the /rikishi/ endpoints and all of the /bouts/ endpoints
+;; with compojure.core/context, like:
+;;
+;;   (context ["/bouts"] []
+;;
+;;     (GET "/list" [] ... )
+;;
+;;     (GET "/:year" [year] ... )
+;;
+;;     ...
+;;   )
+
 (defroutes app-routes
   ;;;;;;;;;;;;;;
   ;; BY RIKISHI
@@ -14,7 +30,9 @@
   ; list of all rikishi
   (GET "/rikishi/list" []
     (response (func/list-rikishi)))
-  
+
+  ;; TODO nest under /rikishi/*
+
   ; specific rikishi record
   (GET "/:name" [name] 
     (response (func/get-rikishi name)))

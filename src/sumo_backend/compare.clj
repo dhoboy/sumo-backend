@@ -75,9 +75,69 @@
           results
           rest)))))
 
+(defn- rikishi-comparison-2
+  "for a given rikishi
+   process all bout data, comparing
+   wins/losses according to passed in 
+   success-criteria function"
+  [rikishi outcome success-criteria results [bout & rest]] ; "endo" "loose" ...
+  (if (nil? bout) ; no more bouts, return results
+    results
+    (if (and
+          (utils/rikishi-win-or-loose-bout rikishi outcome bout)
+          (success-criteria bout))
+      (rikishi-comparison-2 ; save this bout and continue
+        rikishi
+        outcome
+        success-criteria
+        (conj results bout)
+        rest)
+      (rikishi-comparison-2 ; move on, dont save this bout
+        rikishi
+        outcome
+        success-criteria
+        results
+        rest))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;; Bouts Rikishi Lost
 ;;;;;;;;;;;;;;;;;;;;;;;
+
+; using more generic success-criteria function that only takes bout as an argument
+; will switch all of these to use this generic success-criteria function
+(defn get-rikishi-losses-to-lower-rank-2
+  "given a rikishi name string and
+   optional 'delta' and 'comparison' fn pair,
+   Returns either all losses to lower ranks
+   or losses according to delta and comparison fn"
+  ([rikishi] ; all losses to lower rank
+   (rikishi-comparison-2
+    rikishi
+    "loose"
+    #(let [rikishi-rank-value ; % is bout
+            (utils/get-rank-value-in-bout rikishi %)
+           opponent-rank-value 
+            (utils/get-rank-value-in-bout 
+             (utils/get-bout-opponent rikishi %) %)]
+      (and ; opponent rank is lower and rank delta less than infinity aka everything
+       (>= opponent-rank-value rikishi-rank-value)
+       (< (- opponent-rank-value rikishi-rank-value) ##Inf))) 
+    '()
+    (db/get-bouts-by-rikishi rikishi)))
+  ([rikishi comparison delta] ; >, >=, =, <, <=, any comparison
+   (rikishi-comparison-2 ; ["endo" >= 2] all losses to rikishi >= 2 ranks lower than endo
+    rikishi              ; ["endo" = 2] all losses to rikishi = 2 ranks lower than endo
+    "loose"
+    #(let [rikishi-rank-value
+            (utils/get-rank-value-in-bout rikishi %)
+           opponent-rank-value
+            (utils/get-rank-value-in-bout
+             (utils/get-bout-opponent rikishi %) %)]
+      (and ; opponent rank is lower and delta satisfies given comparision and delta
+       (>= opponent-rank-value rikishi-rank-value)
+       (comparison (- opponent-rank-value rikishi-rank-value) delta)))
+    '() 
+    (db/get-bouts-by-rikishi rikishi))))
 
 (defn get-rikishi-losses-to-lower-rank
   "given a rikishi name string and

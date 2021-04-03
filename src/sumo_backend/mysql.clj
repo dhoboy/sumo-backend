@@ -83,35 +83,6 @@
             [:= :year year]
             [:= :month month]])))))))
 
- ;; add a route that lets you get
- ;; upsets by rikishi by delta
- ;; "rikishi/upsets/endo/win/5"
- ;;  something like that would mean
- ;;  all the bouts where endo
- ;;  beat someone 5 ranks higher than
- ;;  himself.
- ;; "rikishi/upsets/endo/loose/5"
- ;;  all the bouts where he lost
- ;;  to someone 5 ranks lower
- ;;
- ;; or even something like
- ;; "bouts/upsets/5"
- ;;  just all 5 level upsets
- ;;
- ;; also "rikishi/upsets/endo/win"
- ;;  for all the times he beat a higher ranker
- ;;
- ;; "rikishi/upsets/endo/loose"
- ;;  all the time he lost to a lower ranker
- ;;
- ;; -- these 2 aren't upsets but still interesting
- ;; "rikishi/endo/win/<rank>"
- ;;  all the time he beat a particular rank
- ;;
- ;; "rikishi/endo/loose/<rank>"
- ;;  all the time he lost to a particular rank
- ;;
- 
 (defn get-rikishi
   "gets rikihsi record specified by passed in name"
   [name]

@@ -115,16 +115,44 @@
     (:year bout)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Did the rikishi win/loose given bout?
+;; Get Opponent's rank from a bout
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn rikishi-win-or-loose-bout
+(defn get-opponent-rank-in-bout
+  "given a rikishi and bout, return
+   rikishi opponent's rank value"
+  [rikishi bout]
+  (get-rank-in-bout
+   (get-bout-opponent
+    rikishi
+    bout)
+   bout))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Get Opponent's rank value from a bout
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn get-opponent-rank-value-in-bout
+  "given a rikishi and bout, return
+   rikishi opponent's rank value"
+  [rikishi bout]
+  (get-rank-value-in-bout
+    (get-bout-opponent
+      rikishi
+      bout)
+    bout))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Did the rikishi win/lose given bout?
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn rikishi-win-or-lose-bout
   "given a rikishi, bout, and an outcome
    return true or false
    according to the expression"
   [rikishi outcome bout]
   ((or 
-    (and (= outcome "loose") not=) 
+    (and (= outcome "lose") not=)
     (and (= outcome "win") =))
    (:winner bout) (clojure.string/upper-case rikishi)))
 

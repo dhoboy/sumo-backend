@@ -41,20 +41,6 @@
   [coll elm]
   (some #(= elm %) coll))
 
-;; Note on ranks
-;; Komusubi, Maegashira, and Juryo are not the same
-;; Difference between them is the Maegashira's number
-;; Or all Maegashira numbers + the Juryo number
-;; e.g. Maegashira #1 is one rank away from Komusubi
-
-(def ranks
-  { :yokozuna 1
-    :ozeki 2
-    :sekiwake 3
-    :komusubi 4
-    :maegashira 4 ; Maegashira #1, Maegashira #2, ...
-    :juryo 4 })   ; Juryo #1, Juryo #2, ...
-
 (defn get-all-ranks-in-tournament
   "returns all ranks competing in a tournament"
   [month year] ; hash set of every rank
@@ -149,42 +135,22 @@
 
 (defn get-bouts-by-rikishi
   "gets all bouts by rikishi and optional year, month, date"
-  ([name] ; how can i do somehting like [clojure.string/upper-case name] here to force the param to come in upper-cased?
-    (jdbc/query mysql-db (sql/format
-      (sql/build
-        :select :*
-        :from :bout
-        :where [:or [:= :east name] [:= :west name]]))))
-  ([name year] 
-    (jdbc/query mysql-db (sql/format 
-      (sql/build
-        :select :* 
-        :from :bout
-        :where 
-          [:and 
-            [:or [:= :east name] [:= :west name]] 
-            [:= :year year]]))))
-  ([name year month] 
-    (jdbc/query mysql-db (sql/format 
-      (sql/build
-        :select :*
-        :from :bout
-        :where 
-          [:and
-            [:or [:= :east name] [:= :west name]]
-            [:= :year year] 
-            [:= :month month]]))))
-  ([name year month day] 
-    (jdbc/query mysql-db (sql/format
-      (sql/build
-        :select :*
-        :from :bout
-        :where
-          [:and
-            [:or [:= :east name] [:= :west name]]
-            [:= :year year] 
-            [:= :month month]
-            [:= :day day]])))))
+  [{:keys [name year month day page per] :or {page "1" per "10"}}]
+    {:pagination {:page (Integer/parseInt page) :per (Integer/parseInt per)}
+     :items
+       (jdbc/query mysql-db (sql/format
+         (sql/build
+           :select :*
+           :from :bout
+           :where
+             [:and
+               [:or [:= :east name] [:= :west name]]
+               (if year [:= :year year] nil)
+               (if month [:= :month month] nil)
+               (if day [:= :day day] nil)]
+           :order-by [[:year :desc] [:month :desc] [:day :asc]]
+           :limit (Integer/parseInt per)
+           :offset (* (- (Integer/parseInt page) 1) (Integer/parseInt per)))))})
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Rikishi's Head to Head Matchups

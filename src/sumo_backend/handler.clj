@@ -2,11 +2,11 @@
 (require '[compojure.core :refer :all])
 (require '[compojure.route :as route])
 (require '[ring.middleware.json :refer [wrap-json-response]])
+(require '[ring.middleware.params :refer :all])
 (require '[ring.util.response :refer [response]])
 (require '[jumblerg.middleware.cors :refer [wrap-cors]])
 (require '[sumo-backend.mysql :as mysql])
   
-;; TODO: paginate these routes
 ;; add a route that lets you get
  ;; upsets by rikishi by delta
  ;; "rikishi/upsets/endo/win/5"
@@ -45,26 +45,10 @@
     ; list of all rikishi
     (GET "/list" []
       (response (mysql/list-rikishi)))
-  
+      
     ; specific rikishi record
-    (GET "/:name" [name] 
+    (GET "/details/:name" [name] 
       (response (mysql/get-rikishi name)))
-
-    ; all bouts rikishi is in
-    (GET "/:name/bouts" [name]
-      (response (mysql/get-bouts-by-rikishi name)))
-
-    ; all bouts rikishi is in on specified year/month/day
-    (GET "/:name/bouts/:year/:month/:day" [name year month day]
-      (response (mysql/get-bouts-by-rikishi name year month day)))
-
-    ; all bouts rikishi is in in specified year/month
-    (GET "/:name/bouts/:year/:month" [name year month]
-    (response (mysql/get-bouts-by-rikishi name year month)))
-
-    ; all bouts rikishi is in in specified year
-    (GET "/:name/bouts/:year" [name year]
-      (response (mysql/get-bouts-by-rikishi name year)))
   )
   
   ;;;;;;;;;;;;;;
@@ -76,7 +60,21 @@
     ; all tournaments data exists for
     (GET "/list" []
       (response (mysql/list-bouts)))
+    
+    ; all bouts rikishi is in
+    ; e.g. /bouts/endo?year=2020&month=1&day=1&per=1&page=1
+    (GET "/:name" [name year month day page per]
+      (response
+        (mysql/get-bouts-by-rikishi
+          (merge ; get-bouts-by-rikishi handles default pagination
+            {:name name
+             :year year
+             :month month
+             :day day}
+             (if page {:page page} nil)
+             (if per  {:per per} nil)))))
 
+    ;; re-write this
     ; all bouts on specified year/month/day
     (GET "/:year/:month/:day" [year month day]
       (response (mysql/get-bouts-by-date year month day)))
@@ -92,7 +90,14 @@
 
   (route/not-found "Not Found"))
 
-(def app
-  (wrap-json-response (wrap-cors app-routes #".*")))
+;; (def app
+;;  (wrap-json-response
+;;    (wrap-cors
+;;      (wrap-params app-routes)
+;;     #".*")))
 
-  
+(def app
+  (-> app-routes
+      (wrap-params)
+      (wrap-cors #".*")
+      (wrap-json-response)))

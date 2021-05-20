@@ -5,6 +5,7 @@
 (require '[cheshire.core :refer :all]) ; parses json
 (require '[jdbc.pool.c3p0 :as pool])
 
+;; Only namespace that connects to MySql 
 
 ;; reading in keys from an env variable file for now
 ;; Or cached:
@@ -35,11 +36,18 @@
 ;; some other thread periodically checking the status of the query chan
 ;; and scaling connections/threads accordingly.
 
+;;;;;;;;;;;;;;;;;;;;;;;
+;;; HELPER FUNCTIONS
+;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn in?
   "true if collection contains elm"
   [coll elm]
   (some #(= elm %) coll))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; UNPAGINATED QUERIES... wrap in pagination later
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn get-all-ranks-in-tournament
   "returns all ranks competing in a tournament"
@@ -105,69 +113,94 @@
       :from :bout
       :order-by [[:year :desc] [:month :desc]]))))
 
-(defn get-bouts-by-date
-  "gets all bouts in specified time frame: year, month, day"
-  ([year]
-    (jdbc/query mysql-db (sql/format 
-      (sql/build
-        :select :*
-        :from :bout
-        :where [:= :year year]))))
-  ([year month]
-    (jdbc/query mysql-db (sql/format
-      (sql/build 
-        :select :* 
-        :from :bout
-        :where 
-          [:and
-            [:= :year year]
-            [:= :month month]]))))
-  ([year month day]
-    (jdbc/query mysql-db (sql/format
-      (sql/build
-        :select :*
-        :from :bout
-        :where 
-          [:and
-            [:= :year year]
-            [:= :month month] 
-            [:= :day day]])))))
 
-(defn get-bouts-by-rikishi
-  "gets all bouts by rikishi and optional year, month, date"
-  [{:keys [name year month day page per] :or {page "1" per "10"}}]
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; QUERIES WITH OPTIONAL PAGINATION
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; build queries
+(defn build-rikishi-bout-history-query
+  "given a :rikishi and :opponent, returns all bouts between the two.
+   optionally takes :winner, :looser, :year, :month, and :day params"
+  [{:keys [rikishi opponent winner looser year month day]}]
+  [:select :*
+   :from :bout
+   :where
+     [:and
+       [:or
+         [:and [:= :east rikishi] [:= :west opponent]]
+         [:and [:= :east rikishi] [:= :west opponent]]]
+       (if winner [:= :winner winner] nil)
+       (if looser
+         [:and
+           [:or [:= :east rikishi] [:= :west rikishi]]
+           [:not= :winner looser]]
+         nil)
+       (if year [:= :year year] nil)
+       (if month [:= :month month] nil)
+       (if day [:= :day day] nil)]])
+
+(defn build-bouts-by-rikishi-query
+  "gets all bouts by :rikishi with optional 
+   :year, :month, :day and :winner params"
+  [{:keys [rikishi winner looser year month day]}]
+  [:select :*
+   :from :bout
+   :where
+   (let [rikishi-clause [:or [:= :east rikishi] [:= :west rikishi]]]
+     (if (or winner looser year month day)
+       (concat
+         [:and rikishi-clause]
+         (when winner [[:= :winner winner]])
+         (when looser [[:and rikishi-clause [:not= :winner looser]]])
+         (when year [[:= :year year]])
+         (when month [[:= :month month]])
+         (when day [[:= :day day]]))
+       rikishi-clause))])
+
+(defn build-bouts-by-date-query
+  "gets all bouts given optional time params :year, :month, :day params
+   also takes optional :winner param. :looser param not supported because
+   there is no 'looser' column in the database. can't get looser without
+   passing in rikishi name, which is build-bouts-by-rikishi-query"
+  [{:keys [winner year month day]}]
+  [:select :*
+   :from :bout
+   :where
+     (if (or winner year month day)
+       [:and
+         (if winner [:= :winner winner] nil)
+         (if year [:= :year year] nil)
+         (if month [:= :month month] nil)
+         (if day [:= :day day] nil)]
+       true)])
+
+; runs query against the database
+(defn run-bout-list-query
+  "returns a bout list using the appropriate query, optionally paginated"
+  [{:keys [rikishi opponent page per] :as params}]
+  (jdbc/query 
+    mysql-db
+    (sql/format
+      (apply sql/build
+        (apply merge ; every query in this file could be run through this
+          (cond ; bring in appropriate query given passed in params
+            (and rikishi opponent) (build-rikishi-bout-history-query params)
+            (and rikishi) (build-bouts-by-rikishi-query params)
+            :else (build-bouts-by-date-query params))
+          (if (and page per) ; optionally add pagination
+            [:order-by [[:year :desc] [:month :desc] [:day :asc]]
+             :limit (Integer/parseInt per)
+             :offset (* (- (Integer/parseInt page) 1) (Integer/parseInt per))]
+           nil))))))
+
+; top level bout list by criteria function
+(defn get-bout-list
+  "given a set of criteria, returns a bout list.
+   pass { :paginate true } to get the response paginated.
+   also takes :page and :per string params to step through response pages"
+  [{:keys [paginate page per] :or {page "1" per "15"} :as params}]
+  (if paginate
     {:pagination {:page (Integer/parseInt page) :per (Integer/parseInt per)}
-     :items
-       (jdbc/query mysql-db (sql/format
-         (sql/build
-           :select :*
-           :from :bout
-           :where
-             [:and
-               [:or [:= :east name] [:= :west name]]
-               (if year [:= :year year] nil)
-               (if month [:= :month month] nil)
-               (if day [:= :day day] nil)]
-           :order-by [[:year :desc] [:month :desc] [:day :asc]]
-           :limit (Integer/parseInt per)
-           :offset (* (- (Integer/parseInt page) 1) (Integer/parseInt per)))))})
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Rikishi's Head to Head Matchups
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn rikishi-bout-history
-  "given two rikishi name strings
-   returns all bouts between the two"
-  [rikishi_a rikishi_b]
-  (if (and (valid-rikishi? rikishi_a) (valid-rikishi? rikishi_b))
-   (jdbc/query mysql-db (sql/format
-    (sql/build
-      :select :*
-      :from :bout
-      :where
-        [:or
-          [:and [:= :east rikishi_a] [:= :west rikishi_b]]
-          [:and [:= :east rikishi_b] [:= :west rikishi_a]]])))
-   nil))
-
+     :items (run-bout-list-query (merge {:page page :per per} params))}
+    (run-bout-list-query params)))

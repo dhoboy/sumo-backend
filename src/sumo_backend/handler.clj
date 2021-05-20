@@ -14,6 +14,7 @@
  ;;  all the bouts where endo
  ;;  beat someone 5 ranks higher than
  ;;  himself.
+
  ;; "rikishi/upsets/endo/loose/5"
  ;;  all the bouts where he lost
  ;;  to someone 5 ranks lower
@@ -42,6 +43,7 @@
   ;;;;;;;;;;;;;;
 
   (context ["/rikishi"] []
+
     ; list of all rikishi
     (GET "/list" []
       (response (mysql/list-rikishi)))
@@ -50,51 +52,86 @@
     (GET "/details/:name" [name] 
       (response (mysql/get-rikishi name)))
   )
+
+  ;;;;;;;;;;;;;;;;;;;
+  ;; BY TOURNAMENT
+  ;;;;;;;;;;;;;;;;;;;
+
+  (context ["/tournament"] []
+
+    (GET "/list" []
+      (response (mysql/list-bouts)))
+    )
   
   ;;;;;;;;;;;;;;
   ;; BY BOUT
   ;;;;;;;;;;;;;;
   
-  (context ["/bouts"] []
+  (context ["/bout"] []
 
-    ; all tournaments data exists for
-    (GET "/list" []
-      (response (mysql/list-bouts)))
-    
-    ; all bouts rikishi is in
-    ; e.g. /bouts/endo?year=2020&month=1&day=1&per=1&page=1
-    (GET "/:name" [name year month day page per]
+    ;; all these are basically the same ...
+    ;; also, something like /bout/list/<rank>
+    ;; all these bouts, but by rank?
+    ;; also, bout list by rikishi at rank?
+
+    ;; all bouts in specified optional date params
+    ;; takes optional winner param
+    ;; e.g. /bout/list?year=2021
+    (GET "/list" [winner year month day page per]
       (response
-        (mysql/get-bouts-by-rikishi
-          (merge ; get-bouts-by-rikishi handles default pagination
-            {:name name
+        (mysql/get-bout-list
+          (merge
+            {:winner winner
              :year year
              :month month
-             :day day}
+             :day day
+             :paginate true}
              (if page {:page page} nil)
              (if per  {:per per} nil)))))
 
-    ;; re-write this
-    ; all bouts on specified year/month/day
-    (GET "/:year/:month/:day" [year month day]
-      (response (mysql/get-bouts-by-date year month day)))
+    ;; all bouts rikishi is in
+    ;; takes optional date and winner, looser params
+    ;; e.g. /bout/list/endo?year=2020&month=1&day=1&per=1&page=1
+    (GET "/list/:rikishi" [rikishi winner looser year month day page per]
+      (response
+        (mysql/get-bout-list
+          (merge
+            {:rikishi rikishi
+             :winner winner
+             :looser looser
+             :year year
+             :month month
+             :day day
+             :paginate true}
+             (if page {:page page} nil)
+             (if per  {:per per} nil)))))
+
+    ;; all bouts rikishi is in with opponent
+    ;; takes optional date and winner, looser params
+    ;; e.g. /bout/list/endo/takakeisho?winner=endo
+    (GET "/list/:rikishi/:opponent" [rikishi opponent winner looser year month day page per]
+      (response
+        (mysql/get-bout-list
+          (merge
+            {:rikishi rikishi
+             :opponent opponent
+             :winner winner
+             :looser looser
+             :year year
+             :month month
+             :day day
+             :paginate true}
+             (if page {:page page} nil)
+             (if per  {:per per} nil)))))
+  )
+
+  (context "/upset" []
+    (GET "/list" []
+      (response "coming soon"))
   
-    ; all bouts in specified year/month
-    (GET "/:year/:month" [year month]
-      (response (mysql/get-bouts-by-date year month)))
-  
-    ; all bouts in specified year
-    (GET "/:year" [year]
-      (response (mysql/get-bouts-by-date year)))
   )
 
   (route/not-found "Not Found"))
-
-;; (def app
-;;  (wrap-json-response
-;;    (wrap-cors
-;;      (wrap-params app-routes)
-;;     #".*")))
 
 (def app
   (-> app-routes

@@ -1,6 +1,9 @@
 (ns sumo-backend.utils)
 (require '[sumo-backend.mysql :as db])
 
+;; Utils functions for deriving interesting
+;; datasets from the database
+
 ;; Note on ranks
 ;; Komusubi, Maegashira, and Juryo are not the same
 ;; Difference between them is the Maegashira's number

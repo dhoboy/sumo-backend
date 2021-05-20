@@ -2,6 +2,9 @@
 (require '[sumo-backend.mysql :as db])
 (require '[sumo-backend.utils :as utils])
 
+;; Comparison functions for deriving interesting
+;; datasets from the database
+
 ;; Note on this namespace:
 ;; Similar to how get-rikishi-losses-to-opponent
 ;; and get-rikishi-wins-against-opponent
@@ -11,20 +14,6 @@
 ;; currently, most of these functions parse through
 ;; every bout, looking for their success-criteria.
 ;; that will get slow as more data is added.
-
-;; Note on ranks
-;; Komusubi, Maegashira, and Juryo are not the same
-;; Difference between them is the Maegashira's number
-;; Or all Maegashira numbers + the Juryo number
-;; e.g. Maegashira #1 is one rank away from Komusubi
-
-(def ranks
-  {:yokozuna 1
-   :ozeki 2
-   :sekiwake 3
-   :komusubi 4
-   :maegashira 4 ; Maegashira #1, Maegashira #2, ...
-   :juryo 4 })   ; Juryo #1, Juryo #2, ...
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Compare Rank Strings
@@ -45,7 +34,7 @@
   ([rank-a-str rank-b-str month year] ; "Maegashira #15", "Ozeki", 3, 2019
    (let [rank-a-keyword (utils/get-rank-keyword rank-a-str)
          rank-b-keyword (utils/get-rank-keyword rank-b-str)]
-     (if (or (nil? (rank-a-keyword ranks)) (nil? (rank-b-keyword ranks)))
+     (if (or (nil? (rank-a-keyword utils/ranks)) (nil? (rank-b-keyword utils/ranks)))
        nil ; invalid rank passed, nil returned
        (let [rank-a-value (utils/get-rank-value rank-a-str month year)
              rank-b-value (utils/get-rank-value rank-b-str month year)]

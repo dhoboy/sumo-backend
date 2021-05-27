@@ -5,7 +5,7 @@
 (require '[cheshire.core :refer :all]) ; parses json
 (require '[jdbc.pool.c3p0 :as pool])
 
-;; Only namespace that connects to MySql 
+;; Namespace that connects to MySql
 
 ;; reading in keys from an env variable file for now
 ;; Or cached:
@@ -37,7 +37,7 @@
 ;; and scaling connections/threads accordingly.
 
 ;;;;;;;;;;;;;;;;;;;;;;;
-;;; HELPER FUNCTIONS
+;;; Helper functions
 ;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn in?
@@ -45,9 +45,9 @@
   [coll elm]
   (some #(= elm %) coll))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; UNPAGINATED QUERIES... wrap in pagination later
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Unpaginated Queries
+;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn get-all-ranks-in-tournament
   "returns all ranks competing in a tournament"
@@ -114,11 +114,11 @@
       :order-by [[:year :desc] [:month :desc]]))))
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; QUERIES WITH OPTIONAL PAGINATION
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Queries With Optional Pagination
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; build queries
+;; build queries
 (defn build-rikishi-bout-history-query
   "given a :rikishi and :opponent, returns all bouts between the two.
    optionally takes :winner, :looser, :year, :month, and :day params"
@@ -126,33 +126,32 @@
   [:select :*
    :from :bout
    :where
-     [:and
-       [:or
-         [:and [:= :east rikishi] [:= :west opponent]]
-         [:and [:= :east rikishi] [:= :west opponent]]]
-       (if winner [:= :winner winner] nil)
-       (if looser
-         [:and
+     (concat
+       [:and
+         [:or
+           [:and [:= :east rikishi] [:= :west opponent]]
+           [:and [:= :east opponent] [:= :west rikishi]]]]
+       (when winner [[:= :winner winner]])
+       (when looser
+         [[:and
            [:or [:= :east rikishi] [:= :west rikishi]]
-           [:not= :winner looser]]
-         nil)
-       (if year [:= :year year] nil)
-       (if month [:= :month month] nil)
-       (if day [:= :day day] nil)]])
+           [:not= :winner looser]]])
+       (when year [[:= :year year]])
+       (when month [[:= :month month]])
+       (when day [[:= :day day]]))])
 
 (defn build-bouts-by-rikishi-query
   "gets all bouts by :rikishi with optional 
    :year, :month, :day and :winner params"
-  [{:keys [rikishi winner looser year month day]}]
+  [{:keys [rikishi winner year month day]}]
   [:select :*
    :from :bout
    :where
    (let [rikishi-clause [:or [:= :east rikishi] [:= :west rikishi]]]
-     (if (or winner looser year month day)
+     (if (or winner year month day)
        (concat
          [:and rikishi-clause]
          (when winner [[:= :winner winner]])
-         (when looser [[:and rikishi-clause [:not= :winner looser]]])
          (when year [[:= :year year]])
          (when month [[:= :month month]])
          (when day [[:= :day day]]))
@@ -162,20 +161,21 @@
   "gets all bouts given optional time params :year, :month, :day params
    also takes optional :winner param. :looser param not supported because
    there is no 'looser' column in the database. can't get looser without
-   passing in rikishi name, which is build-bouts-by-rikishi-query"
+   passing in rikishi name and opponent name, see build-rikishi-bout-history-query"
   [{:keys [winner year month day]}]
   [:select :*
    :from :bout
    :where
      (if (or winner year month day)
-       [:and
-         (if winner [:= :winner winner] nil)
-         (if year [:= :year year] nil)
-         (if month [:= :month month] nil)
-         (if day [:= :day day] nil)]
+       (concat
+         [:and]
+         (when winner [[:= :winner winner]])
+         (when year [[:= :year year]])
+         (when month [[:= :month month]])
+         (when day [[:= :day day]]))
        true)])
 
-; runs query against the database
+;; runs query against the database
 (defn run-bout-list-query
   "returns a bout list using the appropriate query, optionally paginated"
   [{:keys [rikishi opponent page per] :as params}]
@@ -188,13 +188,12 @@
             (and rikishi opponent) (build-rikishi-bout-history-query params)
             (and rikishi) (build-bouts-by-rikishi-query params)
             :else (build-bouts-by-date-query params))
-          (if (and page per) ; optionally add pagination
+          (when (and page per) ; optionally add pagination
             [:order-by [[:year :desc] [:month :desc] [:day :asc]]
              :limit (Integer/parseInt per)
-             :offset (* (- (Integer/parseInt page) 1) (Integer/parseInt per))]
-           nil))))))
+             :offset (* (- (Integer/parseInt page) 1) (Integer/parseInt per))]))))))
 
-; top level bout list by criteria function
+;; top level bout-list-by-criteria function
 (defn get-bout-list
   "given a set of criteria, returns a bout list.
    pass { :paginate true } to get the response paginated.

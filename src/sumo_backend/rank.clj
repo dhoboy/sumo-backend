@@ -1,7 +1,24 @@
-(ns sumo-backend.utils)
+(ns sumo-backend.rank)(ns sumo-backend.rank)
 (require '[sumo-backend.mysql :as db])
 
-;; Utils functions accomplishing common tasks
+;; essentially a re-do of compare.clj
+
+;; Working on simplifying rank logic
+;; biggest issue is that there are a different
+;; number of maegashira each basho
+;; and the first juryo's rank depends
+;; on how many maegashira there are per basho.
+
+;; Idea--
+;; could have a base map like ranks { ... }
+;; and make a version for each basho, with 
+;; rank values down to the bottom of juryo
+;; so there'd be (ranks-<year>-<month>-<day> {...})
+;; one per tournament, to get that tournament 
+;; by tournament rank number exactly right
+;; bouts are identified by their year.month.day
+;; anyway, so there is no reasoning about rank
+;; or a bout without that info
 
 ;; Note on ranks--
 ;; Komusubi, Maegashira, and Juryo are not the same
@@ -16,23 +33,6 @@
     :komusubi 4
     :maegashira 4 ; Maegashira #1, Maegashira #2, ...
     :juryo 4 })   ; Juryo #1, Juryo #2, ...
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Paginate a list of items
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn paginate-list
-  "Given a sequence :item-list, returns that list paginated.
-   Takes :page and :per params to step through response pages.
-   Given :all true, will return entire list un-paginated."
-  [{:keys [item-list page per all] :or {page 1 per 15}}]
-  (if (and all) ; seems better than (not (nil? all)) ?
-    {:pagination {:total (count item-list)}
-     :items item-list}
-    (let [page (if (string? page) (Integer/parseInt page) page)
-          per (if (string? per) (Integer/parseInt per) per)]
-      {:pagination {:page page :per per :total (count item-list)}
-       :items (take per (drop (* (- page 1) per) item-list))})))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Parse out a rank string's keyword and number
@@ -108,18 +108,6 @@
    (and (= (:west bout) (clojure.string/upper-case rikishi)) (:west_rank bout))
    nil))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Get a Rikishi's opponent from a bout 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn get-bout-opponent
-  "for a given rikishi and bout
-   return the bout opponent name string"
-  [rikishi bout]
-  (or
-   (and (= (:east bout) (clojure.string/upper-case rikishi)) (:west bout))
-   (and (= (:west bout) (clojure.string/upper-case rikishi)) (:east bout))))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Get a Rikishi's rank value from a bout 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -160,21 +148,6 @@
       rikishi
       bout)
     bout))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Did the rikishi win/lose given bout?
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn rikishi-win-or-lose-bout
-  "given a rikishi, bout, and an outcome
-   return true or false
-   according to the expression"
-  [rikishi outcome bout]
-  ((or 
-    (and (= outcome "lose") not=)
-    (and (= outcome "win") =))
-   (:winner bout) (clojure.string/upper-case rikishi)))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Get a Rikishi's rank for a tournament

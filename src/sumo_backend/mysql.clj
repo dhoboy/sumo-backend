@@ -51,7 +51,7 @@
 
 (defn get-all-ranks-in-tournament
   "returns all ranks competing in a tournament"
-  [month year] ; hash set of every rank
+  [{:keys [month year]}] ; hash set of every rank
   (into #{} ; how can this be done in one sql call?
     (concat
       (map
@@ -186,7 +186,7 @@
         (apply merge ; every query in this file could be run through this
           (cond ; bring in appropriate query given passed in params
             (and rikishi opponent) (build-rikishi-bout-history-query params)
-            (and rikishi) (build-bouts-by-rikishi-query params)
+            rikishi (build-bouts-by-rikishi-query params)
             :else (build-bouts-by-date-query params))
           (when (and page per) ; optionally add pagination
             [:order-by [[:year :desc] [:month :desc] [:day :asc]]

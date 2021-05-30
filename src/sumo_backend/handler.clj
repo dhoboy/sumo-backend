@@ -7,7 +7,7 @@
 (require '[jumblerg.middleware.cors :refer [wrap-cors]])
 (require '[sumo-backend.utils :as utils])
 (require '[sumo-backend.mysql :as mysql])
-(require '[sumo-backend.compare :as compare])
+(require '[sumo-backend.rank :as rank])
 
 (def comparison-map
   {">" > ">=" >= "=" = "<" < "<=" <=})
@@ -55,7 +55,7 @@
       (response 
         (utils/paginate-list
           (merge
-            {:item-list [(utils/get-rikishi-current-rank name)]}
+            {:item-list [(rank/get-rikishi-current-rank {:rikishi name})]}
             (when page {:page page})
             (when per {:per per})
             (when (and (nil? page) (nil? per)) {:all true})))))
@@ -65,7 +65,7 @@
       (response 
         (utils/paginate-list
           (merge
-            {:item-list (utils/get-rikishi-rank-over-time name)}
+            {:item-list (rank/get-rikishi-rank-over-time {:rikishi name})}
             (when page {:page page})
             (when per {:per per})
             (when (and (nil? page) (nil? per)) {:all true})))))
@@ -172,7 +172,7 @@
         (utils/paginate-list
           (merge
             {:item-list
-              (compare/wins-vs-higher-rank
+              (rank/wins-vs-higher-rank
                 (merge 
                   {:rikishi rikishi
                    :year year
@@ -189,7 +189,7 @@
         (utils/paginate-list
           (merge
             {:item-list
-              (compare/losses-to-lower-rank
+              (rank/losses-to-lower-rank
                 (merge
                   {:rikishi rikishi
                    :year year
@@ -218,7 +218,7 @@
         (utils/paginate-list
           (merge
             {:item-list
-              (compare/wins-vs-rank
+              (rank/wins-vs-rank
                 (merge
                   {:rikishi rikishi
                    :rank-str rank
@@ -235,7 +235,7 @@
         (utils/paginate-list
           (merge
             {:item-list
-              (compare/losses-to-rank
+              (rank/losses-to-rank
                 (merge
                   {:rikishi rikishi
                    :rank-str rank

@@ -103,15 +103,17 @@
     true
     false)))
 
-(defn list-bouts
-  "list all bouts data exists for"
+(defn list-tournaments
+  "list all tournaments data exists for"
   []
-  (jdbc/query mysql-db (sql/format
-    (sql/build
-      :select [:month :year]
-      :modifiers [:distinct]
-      :from :bout
-      :order-by [[:year :desc] [:month :desc]]))))
+  (jdbc/query 
+    mysql-db 
+      (sql/format
+        (sql/build
+          :select [:month :year]
+          :modifiers [:distinct]
+          :from :bout
+          :order-by [[:year :desc] [:month :desc]]))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -122,7 +124,7 @@
 (defn build-rikishi-bout-history-query
   "given a :rikishi and :opponent, returns all bouts between the two.
    optionally takes :winner, :looser, :year, :month, and :day params"
-  [{:keys [rikishi opponent winner looser year month day]}]
+  [{:keys [rikishi opponent winner looser rank opponent-rank year month day]}]
   [:select :*
    :from :bout
    :where
@@ -132,10 +134,13 @@
            [:and [:= :east rikishi] [:= :west opponent]]
            [:and [:= :east opponent] [:= :west rikishi]]]]
        (when winner [[:= :winner winner]])
-       (when looser
-         [[:and
-           [:or [:= :east rikishi] [:= :west rikishi]]
-           [:not= :winner looser]]])
+       (when looser [[:not= :winner looser]])
+       (when rank [[:or
+                    [:and [:= :east rikishi] [:= :east_rank rank]]
+                    [:and [:= :west rikishi] [:= :west_rank rank]]]])
+      (when opponent-rank [[:or
+                            [:and [:= :east opponent] [:= :east_rank opponent-rank]]
+                            [:and [:= :west opponent] [:= :west_rank opponent-rank]]]])
        (when year [[:= :year year]])
        (when month [[:= :month month]])
        (when day [[:= :day day]]))])
@@ -143,19 +148,47 @@
 (defn build-bouts-by-rikishi-query
   "gets all bouts by :rikishi with optional 
    :year, :month, :day and :winner params"
-  [{:keys [rikishi winner year month day]}]
+  [{:keys [rikishi winner looser rank year month day]}]
   [:select :*
    :from :bout
    :where
    (let [rikishi-clause [:or [:= :east rikishi] [:= :west rikishi]]]
-     (if (or winner year month day)
+     (if (or winner looser rank year month day)
        (concat
-         [:and rikishi-clause]
+        [:and rikishi-clause]
+        (when winner [[:= :winner winner]])
+        (when looser [[:not= :winner looser]])
+        (when rank [[:or
+                     [:and [:= :east rikishi] [:= :east_rank rank]]
+                     [:and [:= :west rikishi] [:= :west_rank rank]]]])
+        (when year [[:= :year year]])
+        (when month [[:= :month month]])
+        (when day [[:= :day day]]))
+       rikishi-clause))])
+
+(defn build-rikishi-bouts-against-rank-query
+  "gets all bouts by :rikishi against :rank.
+   optional :year, :month, :day, :at-rank, and :winner? params"
+  [{:keys [rikishi against-rank at-rank winner looser year month day]}]
+  [:select :*
+   :from :bout
+   :where
+   (let [rikishi-clause [:or [:= :east rikishi] [:= :west rikishi]]
+         against-rank-clause [:or
+                               [:and [:= :east rikishi] [:= :west_rank against-rank]]
+                               [:and [:= :west rikishi] [:= :east_rank against-rank]]]]
+     (if (or at-rank winner looser year month day)
+       (concat
+         [:and rikishi-clause against-rank-clause]
          (when winner [[:= :winner winner]])
+         (when looser [[:not= :winner looser]])
+         (when at-rank [[:or
+                      [:and [:= :east rikishi] [:= :east_rank at-rank]]
+                      [:and [:= :west rikishi] [:= :west_rank at-rank]]]])
          (when year [[:= :year year]])
          (when month [[:= :month month]])
          (when day [[:= :day day]]))
-       rikishi-clause))])
+       [:and rikishi-clause against-rank-clause]))])
 
 (defn build-bouts-by-date-query
   "gets all bouts given optional time params :year, :month, :day params
@@ -178,7 +211,7 @@
 ;; runs query against the database
 (defn run-bout-list-query
   "returns a bout list using the appropriate query, optionally paginated"
-  [{:keys [rikishi opponent page per] :as params}]
+  [{:keys [rikishi opponent against-rank page per] :as params}]
   (jdbc/query 
     mysql-db
     (sql/format
@@ -186,6 +219,7 @@
         (apply merge ; every query in this file could be run through this
           (cond ; bring in appropriate query given passed in params
             (and rikishi opponent) (build-rikishi-bout-history-query params)
+            (and rikishi against-rank) (build-rikishi-bouts-against-rank-query params)
             rikishi (build-bouts-by-rikishi-query params)
             :else (build-bouts-by-date-query params))
           (when (and page per) ; optionally add pagination

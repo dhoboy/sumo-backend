@@ -9,16 +9,16 @@
 (require '[sumo-backend.mysql :as mysql])
 (require '[sumo-backend.rank :as rank])
 
+;; TODO --
+;; add support for this with rank's value 
+;; stored in the database so it can be queried
+;; against directly
 (def comparison-map
   {">" > ">=" >= "=" = "<" < "<=" <=})
 
 ;; Ideas for future routes--
 ;; something like /bout/list/<rank>
 ;; all these bouts, but by rank?
-;; also, bout list by rikishi at rank?
-
-;; TODO 
-;; -- maegashira and juryo ranks dont pass to these routes easily
 
 (defroutes app-routes
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -28,6 +28,10 @@
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
   (context ["/rikishi"] []
+    
+    ;; Route for highest rank achieved, and tournaments
+    ;; rikishi held that rank? could also be derived 
+    ;; from rikishi-rank-over-time
     
     ;; list of all rikishi
     (GET "/list" [page per]
@@ -69,7 +73,6 @@
             (when page {:page page})
             (when per {:per per})
             (when (and (nil? page) (nil? per)) {:all true})))))
-         
   )
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -85,7 +88,7 @@
       (response 
        (utils/paginate-list
           (merge
-            {:item-list (mysql/list-bouts)}
+            {:item-list (mysql/list-tournaments)}
             (when page {:page page})
             (when per {:per per})
             (when (and (nil? page) (nil? per)) {:all true})))))
@@ -114,14 +117,21 @@
              (if page {:page page} nil)
              (if per  {:per per} nil)))))
 
-    ;; all bouts rikishi is in, takes optional :winner param
+    ;; all bouts rikishi is in.
+    ;; takes optional :winner, :looser, :rank param
+    ;; :rank param is for what rank rikishi was in the bout
+    ;; on this route where you can only reason about one rikishi
+    ;; only that rikishi is valid to pass as winner or looser...
+    ;; revist this route naming maybe /list/win/:rikishi..?
     ;; e.g. /bout/list/endo?year=2020&month=1&day=1&per=1&page=1
-    (GET "/list/:rikishi" [rikishi winner year month day page per]
+    (GET "/list/:rikishi" [rikishi winner looser rank year month day page per]
       (response
         (mysql/get-bout-list
           (merge
             {:rikishi rikishi
              :winner winner
+             :looser looser
+             :rank (rank/rank-keyword-to-str rank)
              :year year
              :month month
              :day day
@@ -131,7 +141,7 @@
 
     ;; all bouts :rikishi is in with :opponent, takes optional :winner, :looser params
     ;; e.g. /bout/list/endo/takakeisho?winner=endo
-    (GET "/list/:rikishi/:opponent" [rikishi opponent winner looser year month day page per]
+    (GET "/list/:rikishi/:opponent" [rikishi opponent winner looser rank opponent-rank year month day page per]
       (response
         (mysql/get-bout-list
           (merge
@@ -139,6 +149,8 @@
              :opponent opponent
              :winner winner
              :looser looser
+             :rank (rank/rank-keyword-to-str rank)
+             :opponent-rank (rank/rank-keyword-to-str opponent-rank)
              :year year
              :month month
              :day day
@@ -165,6 +177,11 @@
     
     ;; all upsets where the rikishi ranks meet the passed in delta
     ;; (GET "/:delta" [delta comparison year month day page per])
+    
+    ;; TODO - 
+    ;; rewrite the functions used to get upsets to
+    ;; be direct sql queries. stepping through the 
+    ;; entire bout list is too slow
     
     ;; get all upsets that :rikishi won (defeated higher ranked opponent)
     (GET "/win/:rikishi" [rikishi delta comparison year month day page per]
@@ -212,39 +229,94 @@
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   (context "/fare" []
     
-    ;; wins :rikishi had against :rank
-    (GET "/win/:rikishi/:rank" [rikishi rank comparison year month day page per]
+    ;; bout list of :rikishi vs certain :against-rank,
+    ;; with optional rikishi :at-rank
+    (GET "/:rikishi/:against-rank" [rikishi against-rank at-rank year month day page per]
       (response 
-        (utils/paginate-list
+       (mysql/get-bout-list
           (merge
-            {:item-list
-              (rank/wins-vs-rank
-                (merge
-                  {:rikishi rikishi
-                   :rank-str rank
-                   :year year
-                   :month month
-                   :day day}
-                   (when comparison {:comparison (or (get comparison-map comparison) =)})))}
-              (when page {:page page})
-              (when per {:per per})))))
+            {:rikishi rikishi
+             :against-rank (rank/rank-keyword-to-str against-rank)
+             :at-rank (rank/rank-keyword-to-str at-rank)
+             :year year
+             :month month
+             :day day
+             :paginate true}
+             (if page {:page page} nil) ; can't these be when's?
+             (if per  {:per per} nil)))))
+    
+    ;; wins :rikishi had against :against-rank, e.g. maegashira_1
+    ;; with optional rikishi :at-rank
+    (GET "/win/:rikishi/:against-rank" [rikishi against-rank at-rank year month day page per]
+      (response
+        (mysql/get-bout-list ; this returns way faster than the stepping through each bout stuff...
+          (merge
+            {:rikishi rikishi
+             :against-rank (rank/rank-keyword-to-str against-rank)
+             :at-rank (rank/rank-keyword-to-str at-rank)
+             :winner rikishi
+             :year year
+             :month month
+             :day day
+             :paginate true}
+         (when page {:page page})
+         (when per {:per per})))))
+        
+    ;; losses :rikishi had to :against-rank
+    ;; with optional rikishi :at-rank
+    (GET "/lose/:rikishi/:against-rank" [rikishi against-rank at-rank year month day page per]
+      (response
+        (mysql/get-bout-list ; this returns way faster than the stepping through each bout stuff...
+          (merge
+            {:rikishi rikishi
+             :against-rank (rank/rank-keyword-to-str against-rank)
+             :at-rank (rank/rank-keyword-to-str at-rank)
+             :looser rikishi
+             :year year
+             :month month
+             :day day
+             :paginate true}
+         (when page {:page page})
+         (when per {:per per})))))
+    
+    ;; only thing these slow ones have right now is
+    ;; they support a comparision fn.
+    ;; comparison fn can be done when on sql route when
+    ;; rank values get stored in the sql database
+    
+    ;; wins :rikishi had against :rank
+    ;; (GET "/win/slow/:rikishi/:rank" [rikishi rank comparison year month day page per]
+    ;;   (response
+    ;;     (utils/paginate-list
+    ;;      (merge
+    ;;       {:item-list
+    ;;        (rank/wins-vs-rank
+    ;;         (merge
+    ;;          {:rikishi rikishi
+    ;;           :against-rank (keyword rank)
+    ;;           :year year
+    ;;           :month month
+    ;;           :day day}
+    ;;          (when comparison {:comparison (or (get comparison-map comparison) =)})))}
+    ;;       (when page {:page page})
+    ;;       (when per {:per per})))))
     
     ;; losses :rikishi had against :rank
-    (GET "/lose/:rikishi/:rank" [rikishi rank comparison year month day page per]
-      (response
-        (utils/paginate-list
-          (merge
-            {:item-list
-              (rank/losses-to-rank
-                (merge
-                  {:rikishi rikishi
-                   :rank-str rank
-                   :year year
-                   :month month
-                   :day day}
-                   (when comparison {:comparison (or (get comparison-map comparison) =)})))}
-              (when page {:page page})
-              (when per {:per per})))))
+    ;; (GET "/lose/slow/:rikishi/:rank" [rikishi rank comparison year month day page per]
+    ;;   (response
+    ;;     (utils/paginate-list
+    ;;       (merge
+    ;;         {:item-list
+    ;;           (rank/losses-to-rank
+    ;;             (merge
+    ;;               {:rikishi rikishi
+    ;;                :against-rank (keyword rank)
+    ;;                :year year
+    ;;                :month month
+    ;;                :day day}
+    ;;               (when comparison {:comparison (or (get comparison-map comparison) =)})))}
+    ;;       (when page {:page page})
+    ;;       (when per {:per per})))))
   )
             
   (route/not-found "Route Not Found"))

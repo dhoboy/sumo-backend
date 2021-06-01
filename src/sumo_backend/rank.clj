@@ -90,7 +90,7 @@
       merge
       sanyaku-rank-values
         (concat
-          (when 
+          (when
             lowest-maegashira
             (map
               #(hash-map (keyword (str "maegashira_" %)) (+ lowest-sanyaku %))
@@ -116,21 +116,35 @@
           clojure.string/trim
             (clojure.string/split rank-str #"\#"))))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Convert Rank keyword to a string
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn rank-keyword-to-str
+  "given a rank keyword returns it as a string
+   e.g. :maegashira_1 -> 'Maegashira #1'.
+   reverse of rank-str-to-keyword"
+  [rank-keyword]
+  (if rank-keyword
+    (clojure.string/capitalize
+      (clojure.string/join " #"
+        (clojure.string/split
+          (name rank-keyword) #"_")))
+    nil))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Get a Rank's value in a given tournament
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn get-rank-value ; "Ozeki" => 2, "Maegashira #1" => 5
-  "given a rank string, returns its value.
-   if no tournament passed in, defaults to rank string's
+(defn get-rank-value ; "Ozeki" => 2, "Maegashira #1" => 5, :maegashira_1 => 5
+  "given a rank string or keyword, returns its value.
+   if no tournament passed in, defaults to rank's
    value in latest tournament"
   [{:keys [rank year month]
-    :or {year (:year (first (db/list-bouts)))
-         month (:month (first (db/list-bouts)))}}]
-  (let [rank-values (tournament-rank-values {:year year :month month})]
-    (or
-      ((rank-str-to-keyword rank) rank-values)
-      {:error (str "No data for rank " rank " in tournament year: " year " month: " month)})))
+    :or {year (:year (first (db/list-tournaments)))
+         month (:month (first (db/list-tournaments)))}}]
+   (let [rank-values (tournament-rank-values {:year year :month month})]
+     ((if (keyword? rank) rank (rank-str-to-keyword rank)) rank-values)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Get a Rikishi's rank string from a bout
@@ -216,7 +230,7 @@
     (if (db/valid-rikishi? rikishi)
       (get-rikishi-current-rank
         (clojure.string/upper-case rikishi)
-        (db/list-bouts))
+        (db/list-tournaments))
       {:error (str "Data does not exist for rikishi " rikishi)}))
   ([rikishi [tournament & rest]] ; inner function
     (if-let [rank ; rank from checking all bouts in a tournament
@@ -241,7 +255,7 @@
     (if (db/valid-rikishi? rikishi)
       (get-rikishi-rank-over-time
         (clojure.string/upper-case rikishi)
-        (reverse (db/list-bouts))
+        (reverse (db/list-tournaments))
         [])
       {:error (str "Data does not exist for rikishi " rikishi)}))
   ([rikishi [tournament & rest] rank-over-time] ; inner function
@@ -273,6 +287,11 @@
 ;; every bout, looking for their success-criteria.
 ;; that will get slow as more data is added.
 
+;; everything that uses rikishi-comparision is super slow
+;; replace all those calls with just sql calls when possible
+;; only use rikishi-comparison if it cant be accomplished in 
+;; sql first
+
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;; Bouts Rikishi Lost
 ;;;;;;;;;;;;;;;;;;;;;;;
@@ -282,13 +301,15 @@
    return all bouts where rikishi lost.
    optionally takes in comparision function
    to specify rank relative to passed in rank"
-  [{:keys [rikishi comparison rank-str year month day] :or {comparison =}}] ; "endo" >= "ozeki"
+  [{:keys [rikishi comparison against-rank year month day] :or {comparison =}}] ; "endo" >= "ozeki"
     (utils/rikishi-comparison ; all losses against ozeki or higher
       rikishi
       "lose" ; criteria is rikishi opponent is certain rank
-      #(let [rank-value (get-rank-value {:rank rank-str :month month :year year})
+      #(let [against-rank-value (get-rank-value {:rank against-rank :year (:year %) :month (:month %)})
              opponent-rank-value (get-opponent-rank-value-in-bout {:rikishi rikishi :bout %})]
-        (comparison rank-value opponent-rank-value))
+        (if (and against-rank-value opponent-rank-value)
+          (comparison against-rank-value opponent-rank-value)
+          false)) ; error getting rank for a certain rikisi + bout, move on, TODO: log this
       '()
       (db/get-bout-list {:rikishi rikishi :year year :month month :day day})))
 
@@ -304,9 +325,11 @@
       "lose"
       #(let [rikishi-rank-value (get-rank-value-in-bout {:rikishi rikishi :bout %})
              opponent-rank-value (get-opponent-rank-value-in-bout {:rikishi rikishi :bout %})]
-        (and ; opponent rank is lower and delta satisfies given comparision and delta
-          (> opponent-rank-value rikishi-rank-value)
-          (comparison (- opponent-rank-value rikishi-rank-value) delta)))
+        (if (and rikishi-rank-value opponent-rank-value)
+          (and ; opponent rank is lower and delta satisfies given comparision and delta
+            (> opponent-rank-value rikishi-rank-value)
+            (comparison (- opponent-rank-value rikishi-rank-value) delta))
+          false)) ; error getting rank for a certain rikisi + bout, move on, TODO: log this
       '()
       (db/get-bout-list {:rikishi rikishi :year year :month month :day day})))
 
@@ -315,17 +338,19 @@
 ;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn wins-vs-rank
-  "given a rikishi and rank string,
+  "given a rikishi and rank string or keyword,
    return all bouts where rikishi won.
    optionally takes in comparison function
    to specify wins relative to passed in rank"
-  [{:keys [rikishi comparison rank-str year month day] :or {comparison =}}] ; "endo" >= "ozeki"
+  [{:keys [rikishi comparison against-rank year month day] :or {comparison =}}] ; "endo" >= "ozeki"
     (utils/rikishi-comparison ; all wins against ozeki or higher
       rikishi
       "win" ; criteria: rikishi opponent is certain rank
-      #(let [rank-value (get-rank-value {:rank rank-str :month month :year year})
+      #(let [against-rank-value (get-rank-value {:rank against-rank :year (:year %) :month (:month %)})
              opponent-rank-value (get-opponent-rank-value-in-bout {:rikishi rikishi :bout %})]
-        (comparison rank-value opponent-rank-value))
+        (if (and against-rank-value opponent-rank-value)
+          (comparison against-rank-value opponent-rank-value)
+          false)) ; error getting rank for a certain rikisi + bout, move on, TODO: log this
       '()
       (db/get-bout-list {:rikishi rikishi :year year :month month :day day})))
 
@@ -341,8 +366,10 @@
       "win"
       #(let [rikishi-rank-value (get-rank-value-in-bout {:rikishi rikishi :bout %})
              opponent-rank-value (get-opponent-rank-value-in-bout {:rikishi rikishi :bout %})]
-        (and ; rikishi rank is higher and delta satisfies given comparision and delta
-          (< opponent-rank-value rikishi-rank-value)
-          (comparison (- rikishi-rank-value opponent-rank-value) delta)))
+        (if (and rikishi-rank-value opponent-rank-value)
+          (and ; rikishi rank is higher and delta satisfies given comparision and delta
+            (< opponent-rank-value rikishi-rank-value)
+            (comparison (- rikishi-rank-value opponent-rank-value) delta))
+          false)) ; error getting rank for a certain rikisi + bout, move on, TODO: log this
       '()
       (db/get-bout-list {:rikishi rikishi :year year :month month :day day})))

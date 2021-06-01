@@ -17,7 +17,7 @@
 ;;     and by how many steps it is higher.
 ;;     equal ranks return 'same' with :delta 0"
 ;;   ([rank-a-str rank-b-str] ; "yokozunza" "juryo #1" -> {:high-rank "yokozuna", :delta 21}
-;;    (let [recent-tournament (first (db/list-bouts))]
+;;    (let [recent-tournament (first (db/list-tournaments))]
 ;;      (compare-rank
 ;;       rank-a-str
 ;;       rank-b-str

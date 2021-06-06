@@ -3,7 +3,8 @@
 (require '[honeysql.core :as sql]
          '[honeysql.helpers :refer :all :as helpers])
 (require '[cheshire.core :refer :all]) ; parses json
-(require '[jdbc.pool.c3p0 :as pool])
+(require '[jdbc.pool.c3p0 :as pool]) ; TODO - will add this later
+(require '[sumo-backend.utils :as utils])
 
 ;; Namespace that connects to MySql
 
@@ -44,6 +45,61 @@
   "true if collection contains elm"
   [coll elm]
   (some #(= elm %) coll))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Write to Database
+;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; TODO--
+; add in functions to update rikishi records
+; with info like hometown, etc
+(defn write-rikishi
+  "write rikishi info to the database"
+  [rikishi]
+  (jdbc/insert-multi! 
+    mysql-db 
+    :rikishi
+    [{:name (:name rikishi)
+      :image (:image rikishi)
+      :name_ja (:name_ja rikishi)}]))
+
+; TODO-- 
+; add in technique_ja, and a conversion fn if its not there?
+; after all data is loaded, run another fn that writes 
+; rank values to each bout
+; add bout looser! that would make queries on looser so much easier
+(defn write-bout
+  "write a bout's information to the databae"
+  [east west winning-technique date]
+  (jdbc/insert-multi! 
+    mysql-db 
+    :bout
+    [{:east (:name east) :east_rank (:rank east)
+      :west (:name west) :west_rank (:rank west)
+      :winner (utils/get-bout-winner east west)
+      :winning_technique winning-technique
+      :year (:year date) :month (:month date) :day (:day date)}]))
+
+(defn read-basho-file
+  "read in a file representing one day's sumo basho results, write it to the database"
+  [filepath]
+  (let [data (parse-string (slurp filepath) true)]
+    (map
+      (fn [record]
+        ; write unique rikishi records
+        (when (= (jdbc/query mysql-db ["SELECT * FROM rikishi WHERE name = ?", (:name (:east record))]) [])
+          (write-rikishi 
+            (:east record)))
+        (when (= (jdbc/query mysql-db ["SELECT * FROM rikishi WHERE name = ?", (:name (:west record))]) [])
+          (write-rikishi 
+            (:west record)))
+        ; write all bout data to database
+        (write-bout 
+          (:east record) 
+          (:west record) 
+          (:technique record)
+          (utils/get-date filepath)))
+      (:data data))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Unpaginated Queries
@@ -115,12 +171,11 @@
           :from :bout
           :order-by [[:year :desc] [:month :desc]]))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Optionally Paginated Bout List Queries
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Queries With Optional Pagination
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; build queries
+;; build bout list queries
 (defn build-rikishi-bout-history-query
   "given a :rikishi and :opponent, returns all bouts between the two.
    optionally takes :winner, :looser, :year, :month, and :day params"
@@ -208,7 +263,7 @@
          (when day [[:= :day day]]))
        true)])
 
-;; runs query against the database
+;; runs bout-list query against the database, with optional limit and offset pagination
 (defn run-bout-list-query
   "returns a bout list using the appropriate query, optionally paginated"
   [{:keys [rikishi opponent against-rank page per] :as params}]
@@ -216,7 +271,7 @@
     mysql-db
     (sql/format
       (apply sql/build
-        (apply merge ; every query in this file could be run through this
+        (apply merge
           (cond ; bring in appropriate query given passed in params
             (and rikishi opponent) (build-rikishi-bout-history-query params)
             (and rikishi against-rank) (build-rikishi-bouts-against-rank-query params)

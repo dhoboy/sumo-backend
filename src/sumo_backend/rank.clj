@@ -164,11 +164,6 @@
 ;; Get a Rikishi's rank value from a bout 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; TODO: add year month day keys to each bout
-; these aren't on the original data, but can be added when
-; json files are read in and database is populated.
-; until then, this will use value from latest tournament,
-; which could be slightly incorrect when comparing juryo rikishi
 (defn get-rank-value-in-bout
   "given a rikishi and bout, return
    rikishi's rank value"
@@ -278,15 +273,6 @@
           rank-over-time))))))
 
 ;; TODO--
-;; Similar to how get-rikishi-losses-to-opponent
-;; and get-rikishi-wins-against-opponent
-;; take a more optimized list of bouts to parse through,
-;; see if other functions here can take a more
-;; optimized list of bouts to parse through.
-;; currently, most of these functions parse through
-;; every bout, looking for their success-criteria.
-;; that will get slow as more data is added.
-
 ;; everything that uses rikishi-comparision is super slow
 ;; replace all those calls with just sql calls when possible
 ;; only use rikishi-comparison if it cant be accomplished in 

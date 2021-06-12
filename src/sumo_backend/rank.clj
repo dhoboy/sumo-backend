@@ -222,7 +222,7 @@
     {:rank 'Yokozuna', :tournament { :month 7, :year 2020 }}
     returns nil if no data exists for passed in rikishi"
   ([{:keys [rikishi]}] ; top-level
-    (if (db/valid-rikishi? rikishi)
+    (if (db/rikishi-exists? rikishi)
       (get-rikishi-current-rank
         (clojure.string/upper-case rikishi)
         (db/list-tournaments))
@@ -247,7 +247,7 @@
    everytime rikishi has new rank, that is included in the list.
    nil's represent tournaments rikishi did not compete in"
   ([{:keys [rikishi]}] ; top-level
-    (if (db/valid-rikishi? rikishi)
+    (if (db/rikishi-exists? rikishi)
       (get-rikishi-rank-over-time
         (clojure.string/upper-case rikishi)
         (reverse (db/list-tournaments))

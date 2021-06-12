@@ -20,6 +20,14 @@
 ;; something like /bout/list/<rank>
 ;; all these bouts, but by rank?
 
+;; TODO--
+;; plan out ui in terms of 
+;; what calls we need where
+;; design the api to match the UI needs
+
+;; TODO--
+;; build in support for is-playoff for all of these routes
+
 (defroutes app-routes
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; * Rikishi information *
@@ -103,13 +111,14 @@
 
   (context ["/bout"] []
 
-    ;; all bouts, takes optional :winner param
+    ;; all bouts, takes optional :winner and :is-playoff params
     ;; e.g. /bout/list?year=2021&winner=endo
-    (GET "/list" [winner year month day page per]
+    (GET "/list" [winner is-playoff year month day page per]
       (response
         (mysql/get-bout-list
           (merge
             {:winner winner
+             :is-playoff is-playoff
              :year year
              :month month
              :day day
@@ -124,7 +133,7 @@
     ;; only that rikishi is valid to pass as winner or looser...
     ;; revist this route naming maybe /list/win/:rikishi..?
     ;; e.g. /bout/list/endo?year=2020&month=1&day=1&per=1&page=1
-    (GET "/list/:rikishi" [rikishi winner looser rank year month day page per]
+    (GET "/list/:rikishi" [rikishi winner looser rank is-playoff year month day page per]
       (response
         (mysql/get-bout-list
           (merge
@@ -132,6 +141,7 @@
              :winner winner
              :looser looser
              :rank (rank/rank-keyword-to-str rank)
+             :is-playoff is-playoff
              :year year
              :month month
              :day day
@@ -141,7 +151,7 @@
 
     ;; all bouts :rikishi is in with :opponent, takes optional :winner, :looser params
     ;; e.g. /bout/list/endo/takakeisho?winner=endo
-    (GET "/list/:rikishi/:opponent" [rikishi opponent winner looser rank opponent-rank year month day page per]
+    (GET "/list/:rikishi/:opponent" [rikishi opponent winner looser rank opponent-rank is-playoff year month day page per]
       (response
         (mysql/get-bout-list
           (merge
@@ -151,6 +161,7 @@
              :looser looser
              :rank (rank/rank-keyword-to-str rank)
              :opponent-rank (rank/rank-keyword-to-str opponent-rank)
+             :is-playoff is-playoff
              :year year
              :month month
              :day day
@@ -279,6 +290,22 @@
          (when page {:page page})
          (when per {:per per})))))
     
+    ;; TODO--
+    ;; Ben has techniques are grouped into 4 categories
+    ;; chest to chest - moving forward
+    ;; chset to chest - throwing side
+    ;; arms lenght - moving forward
+    ;; arms length - using opponents weight against them
+
+    ;; color code the japanese technique word
+    ;; colors for the type of technique
+    ;; so ex: hatakikomi is colored red for its category color
+    ;; categories have colors!
+    
+    ;; TODO--
+    ;; see about deriving urls for theses matches 
+    ;; on nhk japan site
+
     ;; only thing these slow ones have right now is
     ;; they support a comparision fn.
     ;; comparison fn can be done when on sql route when

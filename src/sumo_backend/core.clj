@@ -55,27 +55,119 @@
 ;; Load in data from file at given path ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn load-data-from-file
-  "load-data-file <path>"
+;; (defn load-data-from-file
+;;   "load-data-file <filepath>"
+;;   [filepath]
+;;   (println "yo")
+;;   (if (.isFile (clojure.java.io/file filepath))
+;;     (db/read-basho-file filepath)
+;;     (println (str "File: " filepath " not found"))))
+
+;; let user point to their own custom data/ path
+(def default-data-dir "./data")
+
+(defn path->obj
+  "given a path string, return
+   it wrapped as a file object"
   [path]
-  (let [file (clojure.java.io/file path)]
-    (if (.isFile file)
-      (println "yay its a file")
-      (println "boo its not a file"))))
+  (if (some? path) ; some? is (not (nil? __))
+    (file-seq
+      (clojure.java.io/file
+        path))
+    nil))
+
+(defn load-data
+  "loads all un-loaded data from the optional
+   passed in (file or dir) path or
+   the default-data-dir into the mysql database"
+  [& args]
+  (let [custom-path  (path->obj (first args))
+        default-path (path->obj default-data-dir)
+        all-files    (->> (or custom-path default-path)
+                          (filter #(.isFile %))
+                          (map str)
+                          (filter #(some? (re-find #".json$" %))))]
+    (if (> (count all-files) 0)
+      (dorun
+        (map db/read-basho-file all-files))
+      (println
+        (str "File: '" (or (first args) default-data-dir) "' not found")))))
 
 ; read in the files in /data directory  
-; thread macro all this
-(def data-dir
-  (file-seq
-    (clojure.java.io/file "./data")))
 
-(let [all-files (filter
-                  #(some?
-                    (re-find #".json$" %))
-                  (map
-                    str 
-                    (filter #(.isFile %) data-dir)))]
-  (map db/read-basho-file all-files))
+;; (let [all-files (filter
+;;                   #(some? (re-find #".json$" %))
+;;                   (map str (filter #(.isFile %) data-dir)))]
+;;   (map db/read-basho-file all-files))
+
+;;;;;;;;;;;;;
+;; Explain 
+;;;;;;;;;;;;;
+
+(def explain-sumo '(
+  ";; Sumo tournaments are 15 days.\n"
+  ";; Tournaments are identified\n"
+  ";; by their year and month.\n"
+  ";; There are 6 tournaments per year:\n"
+  ";; Jan, Mar, May, July, Sept, & Nov.\n"
+  ";; Wrestlers are called 'Rikishi'.\n"
+  ";; Rikishi have one bout per day\n"
+  ";; each tournament.\n"
+  ";; Best record after 15 days\n"
+  ";; wins the tournament.\n"
+  ";; If Rikishi are tied on the last\n"
+  ";; day, a playoff match is held\n"
+  ";; to determine the winner.\n"
+  ";; This is the only case where\n"
+  ";; a Rikishi has more than one\n"
+  ";; match on a given day.\n\n"))
+
+(def explain-data '(
+  ";; Data for this project\n"
+  ";; is loaded from JSON files\n"
+  ";; with this naming convention:\n"
+  ";; -> day<number>__<month>_<year>.json.\n"
+  ";; e.g. 'day1__03_2021.json'\n"
+  ";; Parts separated by one or more _.\n"
+  ";; Use as many _'s as you want for\n"
+  ";; ease of filename readability.\n"
+  ";; A file contains matches held\n"
+  ";; on the day of its filename.\n"
+  ";; The 'default-data-dir'\n"
+  ";; for this project is '/data'.\n"
+  ";; See there for examples.\n\n"
+
+  ";; N.B.: When loading a directory,\n"
+  ";; in order to optimize load time\n"
+  ";; if data for day 15 (final day)\n"
+  ";; already exists in the database\n"
+  ";; for any Rikishi for that tournament,\n"
+  ";; it is assumed all data for that\n"
+  ";; tournament has already been loaded\n"
+  ";; and no files for that tournament\n"
+  ";; will be read.\n\n"
+
+  ";; Load additional files\n"
+  ";; for tournaments with day 15 data\n"
+  ";; already in the database\n"
+  ";; by passing the filepath\n"
+  ";; directly to this command.\n"
+  ";; Files at paths passed directly\n"
+  ";; will always be read, and duplicate\n"
+  ";; data will not be written.\n"))
+
+(defn print-explain
+  "prints more info on sumo in general and 
+   storing and loading data for this project"
+  [& args]
+  (println 
+    (str
+      "\n" 
+      "******* Grand Sumo API *******\n"))
+  (case (first args)
+    "sumo" (println (apply str explain-sumo))
+    "data" (println (apply str explain-data))
+    (println (apply str (concat explain-sumo explain-data)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;; Main Function ;;;;;;
@@ -87,27 +179,29 @@
   (println 
     (str
       "\n** Welcome to the Grand Sumo API!\n"
-      "USAGE: lein run <command> ~OR~ lein run <command> <path>\n\n"
+      "USAGE: lein run <command> <optional path or subject>\n\n"
       "Available commands are:\n"
-      " initialize\n"
-      "   -> This creates the mysql database used by this project\n"
-      " load-all-data\n"
-      "   -> This resets the database to what is found in the 'data/' dir in this project\n"
-      " load-data-dir <path>\n" 
-      "   -> This loads additional data at the specified dir path into the database\n"
-      " load-data-file <path>\n" 
-      "   -> This loads additional data at the specified file path into the database\n"
-      " tear-down\n" 
-      "   -> This drops all mysql tables associated with this project\n"
+      " -> explain <optional subject>\n"
+      "      Provides a quick overview of subject.\n" 
+      "      Available subjects are 'sumo' and 'data'.\n"
+      "      Defaults to explaining all subjects.\n"
+      " -> initialize\n"
+      "      Creates the mysql database and tables used by this project.\n"
+      " -> tear-down\n" ; maybe deletes the db too idk yet
+      "      Drops mysql tables created by this project.\n" 
+      " -> load-data <optional path>\n"
+      "      Loads all previously un-loaded data\n" 
+      "      from the optionally passed file or directory path.\n"
+      "      If no path passed, loads from the default-data-dir, which\n"
+      "      is initially set to '/data' in this project repository.\n"
       "\nOnce your mysql database is populated,\n"
       "You can run 'lein ring server headless' to start this API. **\n")))
 
-(defn -main
+(defn -main ; runs as if you booted repl, runs main and calls with bash args as args
   [& args]
   (case (first args)
+    "explain"        (print-explain (last args))
     "initialize"     (println "initialize this database")
-    "load-all-data"  (println "load all this data")
-    "load-data-dir"  (println (str "load data from this dir " (last args)))
-    "load-data-file" (load-data-from-file (last args))
     "tear-down"      (println "drop all tables created for this project")
+    "load-data"      (load-data (last args))
     (print-help)))

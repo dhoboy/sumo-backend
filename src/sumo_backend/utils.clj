@@ -45,9 +45,9 @@
     (and (= outcome "win") =))
    (:winner bout) (clojure.string/upper-case rikishi)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Get the winner from a given pair of east and west maps
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn get-bout-winner
   "determines winner for passed in east and west records"
@@ -56,17 +56,42 @@
     (:name east)
     (:name west)))
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Get the looser from a given pair of east and west maps
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn get-bout-loser
+  "determines loser for passed in east and west records"
+  [east west]
+  (if (= (:result east) "win")
+    (:name west)
+    (:name east)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Get the date from a filepath
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn get-date
-  "takes in a filepath and parses out the date"
+  "takes in a filepath and parses out the date.
+   file can be nested along any path, but filename
+   must be in this format: 'day<num>_<month>_<year>.json'
+   Any number of underscores can be used to seperate date parts.
+   Ex: I find this more readable 'day1__03_2021.json'"
   [filepath]
-  (let [parts (clojure.string/split filepath #"\/")]
-    {:year (nth parts 2)
-     :month (nth parts 3)
-     :day (subs (nth (clojure.string/split (nth parts 4) #"__") 0) 3)}))
+  (let [parts (-> filepath
+                  (clojure.string/split #"\/")
+                  last
+                  (clojure.string/split #"\.")
+                  first
+                  (clojure.string/split #"\_"))
+        date (->> parts
+                  (map #(clojure.string/split % #"day"))
+                  flatten
+                  (filter #(not= "" %)))]
+    {:day (Integer/parseInt (nth date 0))
+     :month (Integer/parseInt (nth date 1))
+     :year (Integer/parseInt (nth date 2))}))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Compare Rikishi bout history according to passed in function

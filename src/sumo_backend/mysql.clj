@@ -16,8 +16,8 @@
 ;;       (json/parse
 ;;         (slurp ...)
 ;;         true)))))
-(def mysql-db 
-  (:local 
+(def mysql-db
+  (:local
     #_:clj-kondo/ignore
     (parse-string
       (slurp "./keys/mysql.json")
@@ -46,63 +46,8 @@
   [coll elm]
   (some #(= elm %) coll))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Write to Database
-;;;;;;;;;;;;;;;;;;;;;;;;;
-
-; TODO--
-; add in functions to update rikishi records
-; with info like hometown, etc
-(defn write-rikishi
-  "write rikishi info to the database"
-  [rikishi]
-  (jdbc/insert-multi! 
-    mysql-db 
-    :rikishi
-    [{:name (:name rikishi)
-      :image (:image rikishi)
-      :name_ja (:name_ja rikishi)}]))
-
-; TODO-- 
-; add in technique_ja, and a conversion fn if its not there?
-; after all data is loaded, run another fn that writes 
-; rank values to each bout
-; add bout looser! that would make queries on looser so much easier
-(defn write-bout
-  "write a bout's information to the databae"
-  [east west winning-technique date]
-  (jdbc/insert-multi! 
-    mysql-db 
-    :bout
-    [{:east (:name east) :east_rank (:rank east)
-      :west (:name west) :west_rank (:rank west)
-      :winner (utils/get-bout-winner east west)
-      :winning_technique winning-technique
-      :year (:year date) :month (:month date) :day (:day date)}]))
-
-(defn read-basho-file
-  "read in a file representing one day's sumo basho results, write it to the database"
-  [filepath]
-  (let [data (parse-string (slurp filepath) true)]
-    (map
-      (fn [record]
-        ; write unique rikishi records
-        (when (= (jdbc/query mysql-db ["SELECT * FROM rikishi WHERE name = ?", (:name (:east record))]) [])
-          (write-rikishi 
-            (:east record)))
-        (when (= (jdbc/query mysql-db ["SELECT * FROM rikishi WHERE name = ?", (:name (:west record))]) [])
-          (write-rikishi 
-            (:west record)))
-        ; write all bout data to database
-        (write-bout 
-          (:east record) 
-          (:west record) 
-          (:technique record)
-          (utils/get-date filepath)))
-      (:data data))))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Unpaginated Queries
+;;; Ranks Queries
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn get-all-ranks-in-tournament
@@ -133,24 +78,32 @@
             [:= :year year]
             [:= :month month]])))))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Rikishi Queries
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defn get-rikishi
   "gets rikihsi record specified by passed in name"
   [name]
-  (jdbc/query mysql-db (sql/format
-    (sql/build
-      :select :*
-      :from :rikishi
-      :where [:= :name name]))))
+  (jdbc/query
+    mysql-db
+    (sql/format
+      (sql/build
+        :select :*
+        :from :rikishi
+        :where [:= :name name]))))
   
 (defn list-rikishi
   "list all rikishi records"
   []
-  (jdbc/query mysql-db (sql/format 
-    (sql/build 
-      :select :* 
-      :from :rikishi))))
+  (jdbc/query 
+    mysql-db 
+    (sql/format 
+      (sql/build 
+        :select :* 
+        :from :rikishi))))
 
-(defn valid-rikishi?
+(defn rikishi-exists?
   "true if data exists for
    passed in rikishi string, false otherwise"
   [rikishi]
@@ -159,17 +112,21 @@
     true
     false)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Tournament Queries
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defn list-tournaments
   "list all tournaments data exists for"
   []
   (jdbc/query 
     mysql-db 
-      (sql/format
-        (sql/build
-          :select [:month :year]
-          :modifiers [:distinct]
-          :from :bout
-          :order-by [[:year :desc] [:month :desc]]))))
+    (sql/format
+      (sql/build
+        :select [:month :year]
+        :modifiers [:distinct]
+        :from :bout
+        :order-by [[:year :desc] [:month :desc]]))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Optionally Paginated Bout List Queries
@@ -179,7 +136,7 @@
 (defn build-rikishi-bout-history-query
   "given a :rikishi and :opponent, returns all bouts between the two.
    optionally takes :winner, :looser, :year, :month, and :day params"
-  [{:keys [rikishi opponent winner looser rank opponent-rank year month day]}]
+  [{:keys [rikishi opponent winner looser rank opponent-rank is-playoff year month day]}]
   [:select :*
    :from :bout
    :where
@@ -193,9 +150,10 @@
        (when rank [[:or
                     [:and [:= :east rikishi] [:= :east_rank rank]]
                     [:and [:= :west rikishi] [:= :west_rank rank]]]])
-      (when opponent-rank [[:or
-                            [:and [:= :east opponent] [:= :east_rank opponent-rank]]
-                            [:and [:= :west opponent] [:= :west_rank opponent-rank]]]])
+       (when opponent-rank [[:or
+                             [:and [:= :east opponent] [:= :east_rank opponent-rank]]
+                             [:and [:= :west opponent] [:= :west_rank opponent-rank]]]])
+       (when is-playoff [[:= :is_playoff true]]) ; rikishi face each other twice on same day to break tie
        (when year [[:= :year year]])
        (when month [[:= :month month]])
        (when day [[:= :day day]]))])
@@ -203,7 +161,7 @@
 (defn build-bouts-by-rikishi-query
   "gets all bouts by :rikishi with optional 
    :year, :month, :day and :winner params"
-  [{:keys [rikishi winner looser rank year month day]}]
+  [{:keys [rikishi winner looser rank is-playoff year month day]}]
   [:select :*
    :from :bout
    :where
@@ -216,6 +174,7 @@
         (when rank [[:or
                      [:and [:= :east rikishi] [:= :east_rank rank]]
                      [:and [:= :west rikishi] [:= :west_rank rank]]]])
+        (when is-playoff [[:= :is_playoff true]]) ; rikishi face each other twice on same day to break tie
         (when year [[:= :year year]])
         (when month [[:= :month month]])
         (when day [[:= :day day]]))
@@ -224,7 +183,7 @@
 (defn build-rikishi-bouts-against-rank-query
   "gets all bouts by :rikishi against :rank.
    optional :year, :month, :day, :at-rank, and :winner? params"
-  [{:keys [rikishi against-rank at-rank winner looser year month day]}]
+  [{:keys [rikishi against-rank at-rank winner looser is-playoff year month day]}]
   [:select :*
    :from :bout
    :where
@@ -240,6 +199,7 @@
          (when at-rank [[:or
                       [:and [:= :east rikishi] [:= :east_rank at-rank]]
                       [:and [:= :west rikishi] [:= :west_rank at-rank]]]])
+         (when is-playoff [[:= :is_playoff true]]) ; rikishi face each other twice on same day to break tie
          (when year [[:= :year year]])
          (when month [[:= :month month]])
          (when day [[:= :day day]]))
@@ -250,7 +210,7 @@
    also takes optional :winner param. :looser param not supported because
    there is no 'looser' column in the database. can't get looser without
    passing in rikishi name and opponent name, see build-rikishi-bout-history-query"
-  [{:keys [winner year month day]}]
+  [{:keys [winner is-playoff year month day]}]
   [:select :*
    :from :bout
    :where
@@ -258,6 +218,7 @@
        (concat
          [:and]
          (when winner [[:= :winner winner]])
+         (when is-playoff [[:= :is_playoff true]]) ; rikishi face each other twice on same day to break tie
          (when year [[:= :year year]])
          (when month [[:= :month month]])
          (when day [[:= :day day]]))
@@ -292,3 +253,86 @@
     {:pagination {:page (Integer/parseInt page) :per (Integer/parseInt per)}
      :items (run-bout-list-query (merge {:page page :per per} params))}
     (run-bout-list-query params)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Write to Database
+;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn bout-exists?
+  "true if data exists for passed in bout record
+   false otherwise. boolean :is_playoff represents
+   when rikishi face each other twice on the same day, 
+   no logic at this time for > 2 matches on same day"
+  [{:keys [east west is_playoff date]}]
+  ;; should only be 1 or 0 bout here
+  ;; if there's more than that, its a dupe
+  ;; could add in dupe handling code later...
+  (let [bout-list (get-bout-list
+                    {:rikishi (:name east)
+                     :opponent (:name west)
+                     :year (:year date)
+                     :month (:month date)
+                     :day (:day date)
+                     :is-playoff is_playoff})]
+    (if (> (count bout-list) 0)
+      true
+      false)))
+
+; TODO--
+; add in functions to update rikishi records
+; with info like hometown, etc
+(defn write-rikishi
+  "write rikishi info to the database"
+  [rikishi]
+  (jdbc/insert-multi!
+    mysql-db
+    :rikishi
+    [{:name (:name rikishi)
+      :image (:image rikishi)
+      :name_ja (:name_ja rikishi)}]))
+
+; TODO-- 
+; add in technique_ja, and a conversion fn if its not there?
+; after all data is loaded, run another fn that writes 
+; rank values to each bout
+(defn write-bout
+  "write a bout's information to the databae"
+  [{:keys [east west technique date]}]
+  (jdbc/insert-multi!
+    mysql-db
+    :bout
+    [{:east (:name east)
+      :east_rank (:rank east)
+      :west (:name west)
+      :west_rank (:rank west)
+      :winner (utils/get-bout-winner east west)
+      ;:loser (utils/get-bout-loser east west)
+      :winning_technique technique
+      :year (:year date)
+      :month (:month date)
+      :day (:day date)}]))
+
+(defn read-basho-file
+  "read in a file representing one day's 
+   sumo basho results, and write bout and 
+   rikishi records to the database if they
+   haven't been previously written"
+  [filepath]
+  (let [data (parse-string (slurp filepath) true)
+        date (utils/get-date filepath)]
+    (dorun ; usually what you need is dorun,  doall returns results of map, dorun forces the lazy map to execute
+      (map
+        (fn [{:keys [east west] :as record}]
+          (let [full_record (assoc
+                             record
+                             :date date)]
+            (when (not
+                    (rikishi-exists? (:name east)))
+              (write-rikishi east))
+            (when (not
+                    (rikishi-exists? (:name west)))
+              (write-rikishi west))
+            (when (not
+                    (bout-exists? full_record))
+              (write-bout full_record))))
+        (:data data)))))

@@ -1,6 +1,7 @@
 (ns sumo-backend.core)
 (require '[cheshire.core :refer :all]) ; parses json
 (require '[sumo-backend.mysql :as db])
+(require '[sumo-backend.rank :as rank])
 
 ;; TODO Make a main function
 ;; If you specify a main namespace like sumo-backend.core,
@@ -50,20 +51,29 @@
 ; n.b.: day15__09_2019 has a takakeisho and mitakeumi playoff
 
 ; (load-file "./src/sumo_backend/process_json.clj")
+
+;; (= file-count 1) (dorun
+;;                    (map
+;;                      rank/write-tournament-rank-values 
+;;                      (doall
+;;                        (map 
+;;                          db/read-basho-file
+;;                          all-files))))
+
+;; (> file-count 1) (dorun ; for all tournaments where data files
+;;                    (map ; were loaded, write tournament rank values
+;;                      rank/write-tournament-rank-values
+;;                      (into
+;;                        #{} 
+;;                        (filter
+;;                          some?
+;;                          (db/read-basho-dir all-files)))))
   
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Load in data from file at given path ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;
+;; Load Data
+;;;;;;;;;;;;;;
 
-;; (defn load-data-from-file
-;;   "load-data-file <filepath>"
-;;   [filepath]
-;;   (println "yo")
-;;   (if (.isFile (clojure.java.io/file filepath))
-;;     (db/read-basho-file filepath)
-;;     (println (str "File: " filepath " not found"))))
-
-;; let user point to their own custom data/ path
+;; let user point to their own custom data/ path?
 (def default-data-dir "./data")
 
 (defn path->obj
@@ -79,27 +89,33 @@
 (defn load-data
   "loads all un-loaded data from the optional
    passed in (file or dir) path or
-   the default-data-dir into the mysql database"
+   the default-data-dir into the mysql database.
+   writes tournament-rank-values for all tournaments
+   where data was read."
   [& args]
   (let [custom-path  (path->obj (first args))
         default-path (path->obj default-data-dir)
         all-files    (->> (or custom-path default-path)
                           (filter #(.isFile %))
                           (map str)
-                          (filter #(some? (re-find #".json$" %))))]
-    (if (> (count all-files) 0)
-      (dorun
-        (map db/read-basho-file all-files))
-      (println
-        (str "File: '" (or (first args) default-data-dir) "' not found")))))
-
-; read in the files in /data directory  
-
-;; (let [all-files (filter
-;;                   #(some? (re-find #".json$" %))
-;;                   (map str (filter #(.isFile %) data-dir)))]
-;;   (map db/read-basho-file all-files))
-
+                          (filter 
+                            #(some? 
+                              (re-find #".json$" %))))
+        file-count   (count all-files)]
+    (cond
+      (= file-count 1) (->> all-files
+                            (map db/read-basho-file)
+                            doall ; returns value so tournament-rank-values can be written
+                            (map rank/write-tournament-rank-values)
+                            dorun) ; make this map run
+      (> file-count 1) (->> all-files
+                            (db/read-basho-dir) ; returns a doall
+                            (filter some?)
+                            (into #{})
+                            (map rank/write-tournament-rank-values)
+                            dorun) ; make this map run
+      :else (println (str "File: '" (or (first args) default-data-dir) "' not found")))))
+    
 ;;;;;;;;;;;;;
 ;; Explain 
 ;;;;;;;;;;;;;
@@ -139,16 +155,16 @@
 
   ";; N.B.: When loading a directory,\n"
   ";; in order to optimize load time\n"
-  ";; if data for day 15 (final day)\n"
+  ";; if full tournament data, defined as\n"
+  ";; data for 15 days of a tournament,\n"
   ";; already exists in the database\n"
-  ";; for any Rikishi for that tournament,\n"
   ";; it is assumed all data for that\n"
   ";; tournament has already been loaded\n"
   ";; and no files for that tournament\n"
   ";; will be read.\n\n"
 
   ";; Load additional files\n"
-  ";; for tournaments with day 15 data\n"
+  ";; for tournaments with 15 days of data\n"
   ";; already in the database\n"
   ";; by passing the filepath\n"
   ";; directly to this command.\n"
@@ -200,8 +216,8 @@
 (defn -main ; runs as if you booted repl, runs main and calls with bash args as args
   [& args]
   (case (first args)
-    "explain"        (print-explain (last args))
+    "explain"        (print-explain (first (drop 1 args)))
     "initialize"     (println "initialize this database")
     "tear-down"      (println "drop all tables created for this project")
-    "load-data"      (load-data (last args))
+    "load-data"      (load-data (first (drop 1 args)))
     (print-help)))

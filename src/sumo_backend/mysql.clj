@@ -278,6 +278,26 @@
       true
       false)))
 
+(defn full-tournament-data-exists?
+  "true if 15 days (or more) of bout data exist
+   for given tournament year and month, else false.
+   shouldn't have more than 15 days for any tournament,
+   but for completeness >= 15 days is full tournament"
+  [{:keys [year month]}]
+  (let [bout-days (jdbc/query
+                    mysql-db
+                    (sql/format
+                      (sql/build
+                        :select [:day]
+                        :modifiers [:distinct]
+                        :from :bout
+                        :where [:and
+                                [:= :year year] 
+                                [:= :month month]])))]
+    (if (>= (count bout-days) 15)
+      true
+      false)))
+
 ; TODO--
 ; add in functions to update rikishi records
 ; with info like hometown, etc
@@ -293,11 +313,10 @@
 
 ; TODO-- 
 ; add in technique_ja, and a conversion fn if its not there?
-; after all data is loaded, run another fn that writes 
-; rank values to each bout
+; add in technique category
 (defn write-bout
-  "write a bout's information to the databae"
-  [{:keys [east west technique date]}]
+  "write a bout's information to the database"
+  [{:keys [east west technique technique_ja date]}]
   (jdbc/insert-multi!
     mysql-db
     :bout
@@ -306,11 +325,26 @@
       :west (:name west)
       :west_rank (:rank west)
       :winner (utils/get-bout-winner east west)
-      ;:loser (utils/get-bout-loser east west)
-      :winning_technique technique
+      :loser (utils/get-bout-loser east west)
+      :technique technique
+      :technique_ja technique_ja
       :year (:year date)
       :month (:month date)
       :day (:day date)}]))
+
+(defn update-bout
+  "writes list of fields to bout with passed in id
+   fields ex: '([:west_rank_value 16] [:east_rank_value 17])"
+  [id & update-fields]
+  (dorun
+    (map
+      (fn [[field value]]
+        (jdbc/update!
+          mysql-db
+          :bout
+          {field value}
+          ["id = ?" id]))
+     update-fields)))
 
 (defn read-basho-file
   "read in a file representing one day's 
@@ -318,9 +352,10 @@
    rikishi records to the database if they
    haven't been previously written"
   [filepath]
+  (println "reading filepath: " filepath)
   (let [data (parse-string (slurp filepath) true)
         date (utils/get-date filepath)]
-    (dorun ; usually what you need is dorun,  doall returns results of map, dorun forces the lazy map to execute
+    (dorun ; usually what you need is dorun, doall returns results of map, dorun forces the lazy map to execute
       (map
         (fn [{:keys [east west] :as record}]
           (let [full_record (assoc
@@ -335,4 +370,18 @@
             (when (not
                     (bout-exists? full_record))
               (write-bout full_record))))
-        (:data data)))))
+        (:data data)))
+    (dissoc date :day))) ; {:year :month} of tournament that data was read for
+
+(defn read-basho-dir
+  "optimized load of files from a dir. If full
+   tournament data is found in the database for whatever
+   file, that file is skipped"
+  [all-files]
+  (doall
+    (map
+      (fn [filepath]
+        (let [date (utils/get-date filepath)]
+          (when (not (full-tournament-data-exists? date))
+            (read-basho-file filepath))))
+     all-files)))

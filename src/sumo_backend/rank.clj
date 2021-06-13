@@ -6,7 +6,7 @@
 
 ;; N.B. There are a different
 ;; number of maegashira each basho.
-;; The first juryo's rank depends
+;; All juryo ranks depend
 ;; on how many maegashira there are per basho.
 
 ;; TODO--
@@ -42,6 +42,39 @@
     (if (= rank_str number) ; ranks w/o number return nil
       nil
       (Integer/parseInt number))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Convert Rank string to a keyword
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn rank-str-to-keyword
+  "given a rank string returns it as a keyword
+   e.g. 'Maegashira #1' -> :maegashira_1"
+  [rank-str]
+  (keyword
+    (clojure.string/lower-case
+      (clojure.string/join 
+        "_"
+        (map ; maping a fn over a collection, not sure what the kondo error is talking about here
+          clojure.string/trim
+          (clojure.string/split rank-str #"\#"))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Convert Rank keyword to a string
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn rank-keyword-to-str
+  "given a rank keyword returns it as a string
+   e.g. :maegashira_1 -> 'Maegashira #1'.
+   reverse of rank-str-to-keyword"
+  [rank-keyword]
+  (if rank-keyword
+    (clojure.string/capitalize
+      (clojure.string/join 
+        " #"
+        (clojure.string/split
+          (name rank-keyword) #"_")))
+    nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Get the lowest Maegashira/Juryo Rank in a tournament
@@ -101,36 +134,26 @@
               #(hash-map (keyword (str "juryo_" %)) (+ lowest-sanyaku lowest-maegashira %))
               (range 1 (+ lowest-juryo 1))))))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Convert Rank string to a keyword
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn rank-str-to-keyword
-  "given a rank string returns it as a keyword
-   e.g. 'Maegashira #1' -> :maegashira_1"
-  [rank-str]
-  (keyword
-    (clojure.string/lower-case 
-      (clojure.string/join "_"
-        (map ; maping a fn over a collection, not sure what the kondo error is talking about here
-          clojure.string/trim
-            (clojure.string/split rank-str #"\#"))))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Convert Rank keyword to a string
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn rank-keyword-to-str
-  "given a rank keyword returns it as a string
-   e.g. :maegashira_1 -> 'Maegashira #1'.
-   reverse of rank-str-to-keyword"
-  [rank-keyword]
-  (if rank-keyword
-    (clojure.string/capitalize
-      (clojure.string/join " #"
-        (clojure.string/split
-          (name rank-keyword) #"_")))
-    nil))
+(defn write-tournament-rank-values
+  "depending on the number of maegashira each tournament
+   the juryo rank values differ slightly. run this function
+   after all the tournament data has been loaded."
+  [{:keys [year month]}]
+  (println "writing tournament rank values for year:" year "month:" month)
+  (let [bouts (db/get-bout-list
+               {:year year
+                :month month})
+        ranks (tournament-rank-values
+                {:year year
+                 :month month})]
+    (dorun
+      (map
+        (fn [bout]
+          (db/update-bout
+            (:id bout)
+            [:west_rank_value ((rank-str-to-keyword (:west_rank bout)) ranks)]
+            [:east_rank_value ((rank-str-to-keyword (:east_rank bout)) ranks)]))
+       bouts))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Get a Rank's value in a given tournament

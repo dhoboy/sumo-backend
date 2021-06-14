@@ -46,34 +46,23 @@
 ;; This way, if there is a bug with MySQL or you want to change DBs altogether,
 ;; there is only one namespace to change.
 
-; load the repl from the root of the project directory
-; run this file in the repl to populate the database
 ; n.b.: day15__09_2019 has a takakeisho and mitakeumi playoff
-
-; (load-file "./src/sumo_backend/process_json.clj")
-
-;; (= file-count 1) (dorun
-;;                    (map
-;;                      rank/write-tournament-rank-values 
-;;                      (doall
-;;                        (map 
-;;                          db/read-basho-file
-;;                          all-files))))
-
-;; (> file-count 1) (dorun ; for all tournaments where data files
-;;                    (map ; were loaded, write tournament rank values
-;;                      rank/write-tournament-rank-values
-;;                      (into
-;;                        #{} 
-;;                        (filter
-;;                          some?
-;;                          (db/read-basho-dir all-files)))))
   
+;;;;;;;;;;;;;;;
+;; Initialize
+;;;;;;;;;;;;;;;
+
+(defn initialize
+  "Creates the mysql tables for this project
+   if they don't already exist"
+  []
+  (db/create-tables))
+
 ;;;;;;;;;;;;;;
 ;; Load Data
 ;;;;;;;;;;;;;;
 
-;; let user point to their own custom data/ path?
+;; let user point to their own custom data path?
 (def default-data-dir "./data")
 
 (defn path->obj
@@ -176,9 +165,9 @@
   "prints more info on sumo in general and 
    storing and loading data for this project"
   [& args]
-  (println 
+  (println
     (str
-      "\n" 
+      "\n"
       "******* Grand Sumo API *******\n"))
   (case (first args)
     "sumo" (println (apply str explain-sumo))

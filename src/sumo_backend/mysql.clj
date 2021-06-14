@@ -4,6 +4,7 @@
          '[honeysql.helpers :refer :all :as helpers])
 (require '[cheshire.core :refer :all]) ; parses json
 (require '[jdbc.pool.c3p0 :as pool]) ; TODO - will add this later
+(require '[sumo-backend.mysql-table-definitions :as tables])
 (require '[sumo-backend.utils :as utils])
 
 ;; Namespace that connects to MySql
@@ -36,6 +37,18 @@
 ;; to execute SQL queries they read from a clojure.core.async/chan, with
 ;; some other thread periodically checking the status of the query chan
 ;; and scaling connections/threads accordingly.
+
+;;;;;;;;;;;;;;;;;;;
+;; Create Tables
+;;;;;;;;;;;;;;;;;;;
+
+(defn create-tables
+  "Creates the rikishi and bout tables for
+   this project if they don't already exist"
+  []
+  (jdbc/db-do-commands
+    mysql-db
+    tables/bout-table))
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Helper functions

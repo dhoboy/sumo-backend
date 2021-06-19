@@ -2,6 +2,7 @@
 (require '[cheshire.core :refer :all]) ; parses json
 (require '[sumo-backend.mysql :as db])
 (require '[sumo-backend.rank :as rank])
+(require '[sumo-backend.utils :as utils])
 
 ;; TODO Make a main function
 ;; If you specify a main namespace like sumo-backend.core,
@@ -53,17 +54,7 @@
 ;;;;;;;;;;;;;;
 
 ;; let user point to their own custom data path?
-(def default-data-dir "./data")
-
-(defn path->obj
-  "given a path string, return
-   it wrapped as a file object"
-  [path]
-  (if (some? path) ; some? is (not (nil? __))
-    (file-seq
-      (clojure.java.io/file
-        path))
-    nil))
+(def default-data-dir "./tournament_data")
 
 (defn load-data
   "loads all un-loaded data from the optional
@@ -72,8 +63,8 @@
    writes tournament-rank-values for all tournaments
    where data was read."
   [& args]
-  (let [custom-path  (path->obj (first args))
-        default-path (path->obj default-data-dir)
+  (let [custom-path  (utils/path->obj (first args))
+        default-path (utils/path->obj default-data-dir)
         all-files    (->> (or custom-path default-path)
                           (filter #(.isFile %))
                           (map str)

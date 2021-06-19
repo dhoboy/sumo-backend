@@ -2,6 +2,7 @@
 (require '[cheshire.core :refer :all]) ; parses json
 (require '[clojure.string :as str])
 (require '[sumo-backend.technique :as technique])
+(require '[sumo-backend.utils :as utils])
 
 ; This namespace writes to files and transfers data between formats
 
@@ -36,33 +37,76 @@
 
 (def technique-info (atom {}))
 
+(def technique-info-filepath "./metadata/technique-info.json")
+
+(defn technique-info-file-exists?
+  "check that technique-info file exists"
+  []
+  (>
+    (count
+      (filter
+        #(.isFile %)
+        (utils/path->obj technique-info-filepath)))
+    0))
+
+(defn reset-technique-info
+  "resets technique-info atom back to initial state"
+  []
+  (reset! technique-info {}))
+
+;; TODO - add in deduping logic for technique-info.json
+
+;; parse string takes true after filepath to read in all keys as keywords
+;; pass nothing after filepath to read in all keys as strings
+;; pass custom function to decide how to read in keys
+(defn initialize-technique-info
+  "technique-info is backed up to a json file
+   in the metadata folder. this function restores
+   the values in that file to the atom"
+  []
+  (when technique-info-file-exists?
+    (swap!
+      technique-info
+      merge
+      (parse-string
+        (slurp technique-info-filepath)
+        (fn [k] ; keys of json objects in file
+          (if (or (= k "en") (= k "jp") (= k "cat"))
+            (keyword k)
+            k))))))
+
 (defn update-technique-info
-  "derive all technique info from passed in file
-   and update atom with any new technique info found"
+  "derive all technique info from passed in bout datafile
+   and update atom with any new technique info found,
+   also saves to the technique-info.json file in metadata/"
   [data]
-  (swap!
-    technique-info
-    (fn [current-state]
-      (merge-with ; merge with by preserving what you have
-        (fn [prev next] ; don't replace anything non-nil with nil
-          {:en (or (:en prev) (:en next))
-           :jp (or (:jp prev) (:jp next))
-           :cat (or (:cat prev) (:cat next))})
-        current-state
-        (reduce ; reduce down all technique info from this file
-          (fn [acc {:keys [technique technique_ja]}]
-            (assoc ; assoc technique and technique_ja keys
-             acc
-             (str/lower-case (or technique "no-technique"))
-             {:en technique
-              :jp technique_ja
-              :cat (technique/get-category technique_ja)}
-             (str/lower-case (or technique_ja "no-technique_ja"))
-             {:en technique
-              :jp technique_ja
-              :cat (technique/get-category technique_ja)}))
-          {}
-          (:data data))))))
+  (spit
+   technique-info-filepath
+   (generate-string
+     (swap!
+      technique-info
+      (fn [current-state]
+        (merge-with ; merge with by preserving what you have
+          (fn [prev next] ; don't replace anything non-nil with nil
+            {:en (or (:en prev) (:en next))
+             :jp (or (:jp prev) (:jp next))
+             :cat (or (:cat prev) (:cat next))})
+          current-state
+          (reduce ; reduce down all technique info from this file
+            (fn [acc {:keys [technique technique_ja]}]
+              (assoc ; assoc technique and technique_ja keys
+               acc
+               (str/lower-case (or technique "no-technique"))
+               {:en technique
+                :jp technique_ja
+                :cat (technique/get-category technique_ja)}
+               (str/lower-case (or technique_ja "no-technique_ja"))
+               {:en technique
+                :jp technique_ja
+                :cat (technique/get-category technique_ja)}))
+            {}
+            (:data data)))))
+     {:pretty true})))
 
 (defn add-technique-to-datafiles
   "not all files have technique_ja and no files

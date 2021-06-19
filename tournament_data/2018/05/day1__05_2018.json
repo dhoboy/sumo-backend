@@ -9,7 +9,9 @@
                 "result": "win", 
                 "name_ja": "/nhkworld/en/tv/sumo/wrestlers/2/images/kakuryu_ja.png"
             }, 
-            "technique": "Hand pull down", 
+            "technique": "Hand pull down",
+            "technique_ja": "Hikiotoshi",
+            "technique_category": null,
             "west": {
                 "name": "ENDO", 
                 "perform": "0-1", 

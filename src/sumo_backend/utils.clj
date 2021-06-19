@@ -92,6 +92,20 @@
      :month (Integer/parseInt (nth date 1))
      :year (Integer/parseInt (nth date 2))}))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Translate string filepath to file object
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn path->obj
+  "given a path string, return
+   it wrapped as a file object"
+  [path]
+  (if (some? path) ; some? is (not (nil? __))
+    (file-seq
+     (clojure.java.io/file
+      path))
+    nil))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Compare Rikishi bout history according to passed in function
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

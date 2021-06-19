@@ -1,4 +1,4 @@
-(ns sumo-backend.mysql-table-definitions)
+(ns sumo-backend.mysql-schema)
 (require '[clojure.java.jdbc :as jdbc])
 
 ;; Mysql table definitions for tables used in this project
@@ -13,16 +13,16 @@
 ;;   `image` varchar(255) DEFAULT NULL,
 ;;   `name_ja` varchar(255) DEFAULT NULL,
 ;;   PRIMARY KEY (`id`)
-;; ) ENGINE=InnoDB AUTO_INCREMENT=200 DEFAULT CHARSET=utf8;
+;; ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 (def rikishi-table
   (jdbc/create-table-ddl
-    :rikishi2
+    :rikishi
     [[:id "int(11)" :unsigned :not :null :auto_increment :primary :key]
      [:name "varchar(255)" :default :null]
      [:image "varchar(255)" :default :null]
      [:name_ja "varchar(255)" :default :null]]
-    {:table-spec "ENGINE=InnoDB AUTO_INCREMENT=200 DEFAULT CHARSET=utf8"
+    {:table-spec "ENGINE=InnoDB DEFAULT CHARSET=utf8"
      :conditional? true}))
 
 ;;;;;;;;;;;;;;;;;;;;
@@ -46,11 +46,11 @@
 ;;   `month` int(11) DEFAULT NULL,
 ;;   `day` int(11) DEFAULT NULL,
 ;;   PRIMARY KEY (`id`)
-;; ) ENGINE=InnoDB AUTO_INCREMENT=15423 DEFAULT CHARSET=utf8;
+;; ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 (def bout-table
   (jdbc/create-table-ddl
-    :bout2
+    :bout
     [[:id "int(11)" :unsigned :not :null :auto_increment :primary :key]
      [:east "varchar(255)" :default :null]
      [:west "varchar(255)" :default :null]
@@ -66,5 +66,5 @@
      [:year "int(11)" :default :null]
      [:month "int(11)" :default :null]
      [:day "int(11)" :default :null]]
-   {:table-spec "ENGINE=InnoDB AUTO_INCREMENT=15423 DEFAULT CHARSET=utf8"
+   {:table-spec "ENGINE=InnoDB DEFAULT CHARSET=utf8"
     :conditional? true}))

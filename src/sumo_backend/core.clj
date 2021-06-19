@@ -48,16 +48,6 @@
 
 ; n.b.: day15__09_2019 has a takakeisho and mitakeumi playoff
   
-;;;;;;;;;;;;;;;
-;; Initialize
-;;;;;;;;;;;;;;;
-
-(defn initialize
-  "Creates the mysql tables for this project
-   if they don't already exist"
-  []
-  (db/create-tables))
-
 ;;;;;;;;;;;;;;
 ;; Load Data
 ;;;;;;;;;;;;;;
@@ -104,7 +94,7 @@
                             (map rank/write-tournament-rank-values)
                             dorun) ; make this map run
       :else (println (str "File: '" (or (first args) default-data-dir) "' not found")))))
-    
+
 ;;;;;;;;;;;;;
 ;; Explain 
 ;;;;;;;;;;;;;
@@ -129,7 +119,10 @@
 
 (def explain-data '(
   ";; Data for this project\n"
-  ";; is loaded from JSON files\n"
+  ";; is loaded into a Mysql database\n"
+  ";; named 'sumo'. Be sure this database\n"
+  ";; exists before loading data.\n"
+  ";; Data is loaded from JSON files\n"
   ";; with this naming convention:\n"
   ";; -> day<number>__<month>_<year>.json.\n"
   ";; e.g. 'day1__03_2021.json'\n"
@@ -191,8 +184,8 @@
       "      Available subjects are 'sumo' and 'data'.\n"
       "      Defaults to explaining all subjects.\n"
       " -> initialize\n"
-      "      Creates the mysql database and tables used by this project.\n"
-      " -> tear-down\n" ; maybe deletes the db too idk yet
+      "      Creates the mysql tables used by this project.\n"
+      " -> tear-down\n"
       "      Drops mysql tables created by this project.\n" 
       " -> load-data <optional path>\n"
       "      Loads all previously un-loaded data\n" 
@@ -205,8 +198,8 @@
 (defn -main ; runs as if you booted repl, runs main and calls with bash args as args
   [& args]
   (case (first args)
-    "explain"        (print-explain (first (drop 1 args)))
-    "initialize"     (println "initialize this database")
-    "tear-down"      (println "drop all tables created for this project")
-    "load-data"      (load-data (first (drop 1 args)))
+    "explain"          (print-explain (first (drop 1 args)))
+    "initialize"       (db/create-tables)
+    "tear-down"        (db/drop-tables)
+    "load-data"        (load-data (first (drop 1 args)))
     (print-help)))

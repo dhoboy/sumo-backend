@@ -4,7 +4,7 @@
          '[honeysql.helpers :refer :all :as helpers])
 (require '[cheshire.core :refer :all]) ; parses json
 (require '[jdbc.pool.c3p0 :as pool]) ; TODO - will add this later
-(require '[sumo-backend.mysql-table-definitions :as tables])
+(require '[sumo-backend.mysql-schema :as schema])
 (require '[sumo-backend.utils :as utils])
 
 ;; Namespace that connects to MySql
@@ -48,7 +48,29 @@
   []
   (jdbc/db-do-commands
     mysql-db
-    tables/bout-table))
+    schema/rikishi-table)
+  (jdbc/db-do-commands
+    mysql-db
+    schema/bout-table))
+
+;;;;;;;;;;;;;;;;;;;
+;; Drop Tables
+;;;;;;;;;;;;;;;;;;;
+
+(defn drop-tables
+  "Drops the rikishi and bout tables for
+   this project if they exist"
+  []
+  (jdbc/db-do-commands
+    mysql-db
+    (jdbc/drop-table-ddl
+      :rikishi
+      {:conditional? true}))
+  (jdbc/db-do-commands
+    mysql-db
+    (jdbc/drop-table-ddl
+      :bout
+      {:conditional? true})))
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Helper functions
@@ -90,6 +112,40 @@
             [:and
             [:= :year year]
             [:= :month month]])))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Technique Queries
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; thoughts--
+; run this everytime you load new data
+; new data could have new techniques on it and you
+; don't want this to get out of sync
+(defn techniques-used
+  "returns map of techniques used in the passed in tournament year and month.
+   map keys are the technique_ja Japanese name for each technique
+   e.g. {:oshidashi {:jp 'oshidashi' :en 'Frontal push out' :cat 'push'}}"
+  [{:keys [year month]}]
+  (reduce
+    (fn [acc {:keys [technique technique_ja technique_category]}]
+      (assoc
+        acc
+        (keyword (clojure.string/lower-case technique_ja))
+        {:en technique :jp technique_ja :cat technique_category}))
+      {}
+      (filter
+        #(some? (:technique_ja %))
+        (jdbc/query
+          mysql-db
+          (sql/format
+            (sql/build
+              :select [:technique :technique_ja :technique_category]
+              :modifiers [:distinct]
+              :from :bout
+              :where 
+                [:and
+                  [:= :year year]
+                  [:= :month month]]))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Rikishi Queries
@@ -329,7 +385,7 @@
 ; add in technique category
 (defn write-bout
   "write a bout's information to the database"
-  [{:keys [east west technique technique_ja date]}]
+  [{:keys [east west technique technique_ja technique_category date]}]
   (jdbc/insert-multi!
     mysql-db
     :bout
@@ -341,6 +397,7 @@
       :loser (utils/get-bout-loser east west)
       :technique technique
       :technique_ja technique_ja
+      ;:technique_category 
       :year (:year date)
       :month (:month date)
       :day (:day date)}]))
@@ -359,13 +416,17 @@
           ["id = ?" id]))
      update-fields)))
 
+;; (defn write-technique
+;;   "writes technique entry to the technique table"
+;;   [{:keys [technique_ja technique technique_category]}])
+
 (defn read-basho-file
   "read in a file representing one day's 
    sumo basho results, and write bout and 
    rikishi records to the database if they
    haven't been previously written"
   [filepath]
-  (println "reading filepath: " filepath)
+  (println "reading filepath:" filepath)
   (let [data (parse-string (slurp filepath) true)
         date (utils/get-date filepath)]
     (dorun ; usually what you need is dorun, doall returns results of map, dorun forces the lazy map to execute

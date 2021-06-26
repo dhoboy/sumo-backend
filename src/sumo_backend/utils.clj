@@ -2,6 +2,9 @@
 
 ;; Utils functions accomplishing common tasks
 
+;; let user point to their own custom data path?
+(def default-data-dir "./tournament_data")
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Paginate a list of items
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

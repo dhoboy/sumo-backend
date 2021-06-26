@@ -54,8 +54,6 @@
   []
   (reset! technique-info {}))
 
-;; TODO - add in deduping logic for technique-info.json
-
 ;; parse string takes true after filepath to read in all keys as keywords
 ;; pass nothing after filepath to read in all keys as strings
 ;; pass custom function to decide how to read in keys
@@ -81,45 +79,45 @@
    also saves to the technique-info.json file in metadata/"
   [data]
   (spit
-   technique-info-filepath
-   (generate-string
-     (swap!
-      technique-info
-      (fn [current-state]
-        (merge-with ; merge with by preserving what you have
-          (fn [prev next] ; don't replace anything non-nil with nil
-            {:en (or (:en prev) (:en next))
-             :jp (or (:jp prev) (:jp next))
-             :cat (or (:cat prev) (:cat next))})
-          current-state
-          (reduce ; reduce down all technique info from this file
-            (fn [acc {:keys [technique technique_ja]}]
-              (assoc ; assoc technique and technique_ja keys
-               acc
-               (str/lower-case (or technique "no-technique"))
-               {:en technique
-                :jp technique_ja
-                :cat (technique/get-category technique_ja)}
-               (str/lower-case (or technique_ja "no-technique_ja"))
-               {:en technique
-                :jp technique_ja
-                :cat (technique/get-category technique_ja)}))
-            {}
-            (:data data)))))
-     {:pretty true})))
+    technique-info-filepath
+    (generate-string
+      (swap!
+        technique-info
+        (fn [current-state]
+          (merge-with ; merge with by preserving what you have
+            (fn [prev next] ; don't replace anything non-nil with nil
+              {:en (or (:en prev) (:en next))
+               :jp (or (:jp prev) (:jp next))
+               :cat (or (:cat prev) (:cat next))})
+            current-state
+            (reduce ; reduce down all technique info from this file
+              (fn [acc {:keys [technique technique_ja]}]
+                (assoc ; assoc technique and technique_ja keys
+                 acc
+                 (str/lower-case (or technique "no-technique"))
+                 {:en technique
+                  :jp technique_ja
+                  :cat (technique/get-category technique_ja)}
+                 (str/lower-case (or technique_ja "no-technique_ja"))
+                 {:en technique
+                  :jp technique_ja
+                  :cat (technique/get-category technique_ja)}))
+              {}
+              (:data data)))))
+      {:pretty true})))
 
-(defn add-technique-to-datafiles
+(defn add-technique-to-basho-file
   "not all files have technique_ja and no files
-   start with technique_category, backfill the
-   files with this function"
+   start with technique_category, backfills the
+   file at the passed in filepath with more technique info"
   [filepath]
   (let [data (parse-string (slurp filepath) true)]
     (update-technique-info data)
-    (spit ; write the technique info back to the file
-      (clojure.string/replace filepath #".json" " copy.json")
+    (spit ; write the technique info back to the datafile
+      filepath
       (generate-string 
         {:data 
-         (map 
+         (map
            (fn [{:keys [technique technique_ja technique_category] :as bout}]
              (if (or (nil? technique) 
                      (nil? technique_ja) 
@@ -139,3 +137,21 @@
                bout))
            (:data data))}
         {:pretty true}))))
+
+(defn add-technique-to-basho-dir
+  "runs add-technique-to-basho-file over all files in passed in dir
+   defaults to default-data-dir"
+  [& args]
+  (let [custom-path  (utils/path->obj (first args))
+        default-path (utils/path->obj utils/default-data-dir)
+        all-files    (->> (or custom-path default-path)
+                          (filter #(.isFile %))
+                          (map str)
+                          (filter 
+                            #(some? 
+                              (re-find #".json$" %))))
+        file-count   (count all-files)]
+    (if (> file-count 0)
+      (dorun
+        (map add-technique-to-basho-file all-files))
+      (println (str "File: '" (or (first args) utils/default-data-dir) "' not found")))))

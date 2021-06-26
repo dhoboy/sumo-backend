@@ -117,10 +117,7 @@
 ;;; Technique Queries
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; thoughts--
-; run this everytime you load new data
-; new data could have new techniques on it and you
-; don't want this to get out of sync
+; not sure if this is needed, leaving for now
 (defn techniques-used
   "returns map of techniques used in the passed in tournament year and month.
    map keys are the technique_ja Japanese name for each technique
@@ -222,7 +219,7 @@
        (when opponent-rank [[:or
                              [:and [:= :east opponent] [:= :east_rank opponent-rank]]
                              [:and [:= :west opponent] [:= :west_rank opponent-rank]]]])
-       (when is-playoff [[:= :is_playoff true]]) ; rikishi face each other twice on same day to break tie
+       (when is-playoff [[:= :is_playoff 1]]) ; rikishi face each other twice on same day to break tie
        (when year [[:= :year year]])
        (when month [[:= :month month]])
        (when day [[:= :day day]]))])
@@ -243,7 +240,7 @@
         (when rank [[:or
                      [:and [:= :east rikishi] [:= :east_rank rank]]
                      [:and [:= :west rikishi] [:= :west_rank rank]]]])
-        (when is-playoff [[:= :is_playoff true]]) ; rikishi face each other twice on same day to break tie
+        (when is-playoff [[:= :is_playoff 1]]) ; rikishi face each other twice on same day to break tie
         (when year [[:= :year year]])
         (when month [[:= :month month]])
         (when day [[:= :day day]]))
@@ -268,7 +265,7 @@
          (when at-rank [[:or
                       [:and [:= :east rikishi] [:= :east_rank at-rank]]
                       [:and [:= :west rikishi] [:= :west_rank at-rank]]]])
-         (when is-playoff [[:= :is_playoff true]]) ; rikishi face each other twice on same day to break tie
+         (when is-playoff [[:= :is_playoff 1]]) ; rikishi face each other twice on same day to break tie
          (when year [[:= :year year]])
          (when month [[:= :month month]])
          (when day [[:= :day day]]))
@@ -287,7 +284,7 @@
        (concat
          [:and]
          (when winner [[:= :winner winner]])
-         (when is-playoff [[:= :is_playoff true]]) ; rikishi face each other twice on same day to break tie
+         (when is-playoff [[:= :is_playoff 1]]) ; rikishi face each other twice on same day to break tie
          (when year [[:= :year year]])
          (when month [[:= :month month]])
          (when day [[:= :day day]]))
@@ -380,12 +377,9 @@
       :image (:image rikishi)
       :name_ja (:name_ja rikishi)}]))
 
-; TODO-- 
-; add in technique_ja, and a conversion fn if its not there?
-; add in technique category
 (defn write-bout
   "write a bout's information to the database"
-  [{:keys [east west technique technique_ja technique_category date]}]
+  [{:keys [east west is_playoff technique technique_ja technique_category date]}]
   (jdbc/insert-multi!
     mysql-db
     :bout
@@ -395,9 +389,10 @@
       :west_rank (:rank west)
       :winner (utils/get-bout-winner east west)
       :loser (utils/get-bout-loser east west)
+      :is_playoff is_playoff
       :technique technique
       :technique_ja technique_ja
-      ;:technique_category 
+      :technique_category technique_category
       :year (:year date)
       :month (:month date)
       :day (:day date)}]))
@@ -415,10 +410,6 @@
           {field value}
           ["id = ?" id]))
      update-fields)))
-
-;; (defn write-technique
-;;   "writes technique entry to the technique table"
-;;   [{:keys [technique_ja technique technique_category]}])
 
 (defn read-basho-file
   "read in a file representing one day's 

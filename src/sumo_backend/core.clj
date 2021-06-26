@@ -53,9 +53,6 @@
 ;; Load Data
 ;;;;;;;;;;;;;;
 
-;; let user point to their own custom data path?
-(def default-data-dir "./tournament_data")
-
 (defn load-data
   "loads all un-loaded data from the optional
    passed in (file or dir) path or
@@ -64,7 +61,7 @@
    where data was read."
   [& args]
   (let [custom-path  (utils/path->obj (first args))
-        default-path (utils/path->obj default-data-dir)
+        default-path (utils/path->obj utils/default-data-dir)
         all-files    (->> (or custom-path default-path)
                           (filter #(.isFile %))
                           (map str)
@@ -84,7 +81,7 @@
                             (into #{})
                             (map rank/write-tournament-rank-values)
                             dorun) ; make this map run
-      :else (println (str "File: '" (or (first args) default-data-dir) "' not found")))))
+      :else (println (str "File: '" (or (first args) utils/default-data-dir) "' not found")))))
 
 ;;;;;;;;;;;;;
 ;; Explain 

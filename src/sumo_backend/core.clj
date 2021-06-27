@@ -105,6 +105,7 @@
   ";; a Rikishi has more than one\n"
   ";; match on a given day.\n\n"))
 
+;; maybe mention here about technique...
 (def explain-data '(
   ";; Data for this project\n"
   ";; is loaded into a Mysql database\n"
@@ -120,7 +121,7 @@
   ";; A file contains matches held\n"
   ";; on the day of its filename.\n"
   ";; The 'default-data-dir'\n"
-  ";; for this project is '/data'.\n"
+  ";; for this project is '/tournament_data'.\n"
   ";; See there for examples.\n\n"
 
   ";; N.B.: When loading a directory,\n"
@@ -181,7 +182,7 @@
       "      If no path passed, loads from the default-data-dir, which\n"
       "      is initially set to '/data' in this project repository.\n"
       "\nOnce your mysql database is populated,\n"
-      "You can run 'lein ring server headless' to start this API. **\n")))
+      "You can run 'lein ring server-headless' to start this API. **\n")))
 
 (defn -main ; runs as if you booted repl, runs main and calls with bash args as args
   [& args]

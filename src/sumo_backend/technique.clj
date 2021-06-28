@@ -1,4 +1,5 @@
 (ns sumo-backend.technique)
+(require '[sumo-backend.utils :as utils])
 
 ;; we will have to manually categorize
 ;; new techniques as we encounter them
@@ -35,20 +36,7 @@
    :default
      #{:fusen}
   })
-
-(defn get-technique-key
-  "given a technique_ja string
-   returns it as a keyword"
-  [technique_ja]
-  (when
-    (and
-      (string? technique_ja)
-      (not (clojure.string/blank? technique_ja)))
-    (-> technique_ja
-        clojure.string/trim
-        clojure.string/lower-case
-        keyword)))
-
+ 
 (defn get-category
   "given a technique key or technique_ja string,
    return what category it is in"
@@ -59,5 +47,10 @@
         (% categories)
         (if (keyword? technique)
           technique
-          (get-technique-key technique)))
+          (utils/str->keyword technique)))
       (keys categories))))
+
+(defn get-categories
+  "return categories map"
+  []
+  categories)

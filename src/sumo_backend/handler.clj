@@ -8,10 +8,7 @@
 (require '[sumo-backend.utils :as utils])
 (require '[sumo-backend.mysql :as mysql])
 (require '[sumo-backend.rank :as rank])
-
-;; Ideas for future routes--
-;; something like /bout/list/<rank>
-;; all these bouts, but by rank?
+(require '[sumo-backend.technique :as technique])
 
 ;; TODO--
 ;; plan out ui in terms of 
@@ -24,7 +21,7 @@
 
 (defroutes app-routes
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; * Rikishi information *
+  ;; ******* Rikishi information *************
   ;;   - routes take optional :page and :per
   ;;   - default to returning all as one list
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -78,14 +75,14 @@
     )
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; * Tournament information *
+  ;; ****** Tournament information ***********
   ;;   - routes take optional :page and :per
   ;;   - default to returning all as one list
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   
   (context ["/tournament"] []
 
-    ; list of all tournaments
+    ; list of all tournaments data exists for
     (GET "/list" [page per]
       (response 
        (utils/paginate-list
@@ -94,33 +91,91 @@
          (when page {:page page})
          (when per {:per per})
          (when (and (nil? page) (nil? per)) {:all true})))))
+
+    ; details about tournament: rikishi records, location?
+    ; add makikoshi or kachikoshi to each rikishi too in the merge with
+    (GET "/:year/:month" [year month page per]
+      (response
+       (utils/paginate-list
+        (merge
+         {:item-list (apply 
+                      merge ;; need to do a merge with here?
+                      (concat
+                       (mysql/get-wins-in-tournament {:year year :month month})
+                       (mysql/get-losses-in-tournament {:year year :month month})))}
+         (when page {:page page})
+         (when per {:per per})
+         (when (and (nil? page) (nil? per)) {:all true})))))
     )
   
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; * Lists of bouts against specific rikishi *
-  ;;  ("How does Endo do in general, or against Takakeisho?")
-  ;;  - all routes take these optional params
-  ;;     :winner => rikishi name
-  ;;     :loser  => rikikshi name
-  ;;     :is_playoff => pass true to get playoff matches only 
-  ;;     :year, :month, :day => specify as you wish
-  ;;  - routes take optional :page and :per
-  ;;  - defaulting to returning :page "1" with :per "15"
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; ******** Technique information **********
+  ;;   - routes take optional :page and :per
+  ;;   - default to returning all as one list
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  
+  (context "/technique" []
+    
+    ; technique list
+    ; takes optional :year :month :day params
+    ; defaults to returning all sets of technique,
+    ; technique_en, and technique_category found in database
+    (GET "/list" [year month day page per]
+      (response
+       (utils/paginate-list
+        (merge
+         {:item-list (mysql/list-techniques {:year year :month month :day day})}
+         (when page {:page page})
+         (when per {:per per})
+         (when (and (nil? page) (nil? per)) {:all true})))))
+    
+    ; list of all categories and technique keys classified within
+    (GET "/categories" [page per]
+      (response
+       (utils/paginate-list
+        (merge
+         {:item-list (technique/get-categories)}
+         (when page {:page page})
+         (when per {:per per})
+         (when (and (nil? page) (nil? per)) {:all true})))))
+    
+     ;; could return stats about how many times this technique gets used
+     ;; who uses it and what rank uses it...
+     ;; (GET "/:technique" [])
+    
+    )
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; ********************* BOUT ****************************
+  ;;   - Lists of bouts, against rikishi or by technique
+  ;;   - "How does Endo do in general, or against Takakeisho?"
+  ;;   - "How many wins by oshidashi does Endo have?"
+  ;; 
+  ;;   - All routes take these optional params
+  ;;      :winner => rikishi name
+  ;;      :loser  => rikikshi name
+  ;;      :technique => technique
+  ;;      :technique_category => technique category
+  ;;      :is_playoff => pass true to get playoff matches only 
+  ;;      :year, :month, :day => specify as you wish
+  ;;   - Routes take optional :page and :per
+  ;;   - Default to returning :page "1" with :per "15"
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   
   (context ["/bout"] []
     
-    ; TODO -- add technique to this  
-    ;   /bout/list/endo/takakeisho?technique=oshidashi&winner=takakeisho
-    
     ;; all bouts.
     ;; e.g. /bout/list?year=2021&winner=endo
-    (GET "/list" [winner loser is_playoff year month day page per]
+    (GET "/list" 
+      [winner loser technique technique_category 
+       is_playoff year month day page per]
       (response
        (mysql/get-bout-list
         (merge
          {:winner winner
           :loser loser
+          :technique technique
+          :technique-category technique_category
           :is-playoff is_playoff
           :year year
           :month month
@@ -132,13 +187,17 @@
     ;; all bouts :rikishi is in.
     ;; takes optional :rank param for what rank rikishi was in the bout
     ;; e.g. /bout/list/endo?rank=maegashira_1&year=2020&month=1&day=1&per=1&page=1
-    (GET "/list/:rikishi" [rikishi winner loser rank is_playoff year month day page per]
+    (GET "/list/:rikishi" 
+      [rikishi winner loser technique technique_category 
+       rank is_playoff year month day page per]
       (response
        (mysql/get-bout-list
         (merge
          {:rikishi rikishi
           :winner winner
           :loser loser
+          :technique technique
+          :technique-category technique_category
           :rank (rank/rank-keyword-to-str rank)
           :is-playoff is_playoff
           :year year
@@ -152,7 +211,9 @@
     ;; takes optional :rank param for what rank rikishi was in the bout
     ;; takes optional :opponent_rank param for what rank opponent was in the bout
     ;; e.g. /bout/list/endo/takakeisho?winner=endo
-    (GET "/list/:rikishi/:opponent" [rikishi opponent winner loser rank opponent_rank is_playoff year month day page per]
+    (GET "/list/:rikishi/:opponent" 
+      [rikishi opponent winner loser technique technique_category 
+       rank opponent_rank is_playoff year month day page per]
       (response
        (mysql/get-bout-list
         (merge
@@ -160,6 +221,8 @@
           :opponent opponent
           :winner winner
           :loser loser
+          :technique technique
+          :technique-category technique_category
           :rank (rank/rank-keyword-to-str rank)
           :opponent-rank (rank/rank-keyword-to-str opponent_rank)
           :is-playoff is_playoff
@@ -171,91 +234,35 @@
          (if per  {:per per} nil)))))
     )
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; * Upsets rikishi achieved or surrendered *
-  ;;   - routes take optional :comparision fn
-  ;;      from these choices, "=", ">", ">=", "<", "<="
-  ;;   - routes take optional :delta param
-  ;;      specifies how many rank levels the upset 
-  ;;      should be across e.g. :delta 5 means an upset 
-  ;;      by a rikishi 5 levels lower ranked
-  ;;   - routes take optional :year, :month, :day params
-  ;;   - routes take optional :page and :per
-  ;;   - defaulting to returning :page "1" with :per "15"
-  ;;   - defaulting to using :comparison <=, :delta ##Inf
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  
-  (context "/upset" []
-    
-    ;; all upsets where the rikishi ranks meet the passed in delta
-    ;; (GET "/:delta" [delta comparison year month day page per])
-    
-    ;; TODO - 
-    ;; rewrite the functions used to get upsets to
-    ;; be direct sql queries. stepping through the 
-    ;; entire bout list is too slow
-    
-    ;; get all upsets that :rikishi won (defeated higher ranked opponent)
-    (GET "/win/:rikishi" [rikishi delta comparison year month day page per]
-      (response
-       (utils/paginate-list
-        (merge
-         {:item-list
-          (rank/wins-vs-higher-rank
-           (merge 
-            {:rikishi rikishi
-             :year year
-             :month month
-             :day day}
-            ;; (when comparison {:comparison (or (get comparison-map comparison) <=)})
-            (when delta {:delta (Integer/parseInt delta)})))}
-         (when page {:page page})
-         (when per {:per per})))))
-    
-    ;; get all bouts where :rikishi was upset (lost to lower ranked opponent)
-    (GET "/lose/:rikishi" [rikishi delta comparison year month day page per]
-      (response
-       (utils/paginate-list
-        (merge
-         {:item-list
-          (rank/losses-to-lower-rank
-           (merge
-            {:rikishi rikishi
-             :year year
-             :month month
-             :day day}
-            ;; (when comparison {:comparison (or (get comparison-map comparison) <=)})
-            (when delta {:delta (Integer/parseInt delta)})))}
-         (when page {:page page})
-         (when per {:per per})))))
-    )
-
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; * How rikishi fares against certain ranks *
-  ;;   ("How does endo do against Ozeki?")
-  ;;   - all routes take these optional params
+  ;; ************************* FARE ****************************
+  ;;   - Lists of bouts by rikishi against certain ranks
+  ;;   - "How does endo fare against Ozeki or higher rank?"
+  ;;   - Allows for more rank specificity than BOUT via the matchup param
+  ;;
+  ;;   - All routes take these optional params
   ;;      :at_rank     => rank rikishi was at in bout
   ;;      :matchup     => "includes_higher_ranks", "higher_ranks_only",
   ;;                      "includes_lower_ranks", "lower_ranks_only"
+  ;;      :technique => technique
+  ;;      :technique_category => technique category
   ;;      :is_playoff  => pass true to get playoff matches only
   ;;      :year, :month, :day => specify as you wish
-  ;;   - pass nothing back for matchup, defaults to specified rank only
-  ;;   - routes take optional :page and :per
-  ;;   - defaulting to returning :page "1" with :per "15"
+  ;;   - Pass nothing back for matchup, defaults to specified rank only
+  ;;   - Routes take optional :page and :per
+  ;;   - Defaults to returning :page "1" with :per "15"
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  
   (context "/fare" []
 
-    ; TODO - add technique to this as optional param
-    ;   /fare/endo/ozeki?technique=oshidashi
-    ;   /fare/win/endo/ozeki?technique_category=push
-    
     ;; bout list of :rikishi vs :against_rank,
     ;; e.g. /fare/endo/ozeki?&matchup=higher_ranks_only
     ;;  - "give me all bouts where endo faced higher rank than ozeki"
     ;; e.g. /fare/endo/ozeki?at_rank=maegashira_1&matchup=includes_lower_ranks
     ;;  - "give me all bouts where endo was maegashira #1 and faced ozeki or lower rank"
     (GET "/:rikishi/:against_rank" 
-      [rikishi against_rank at_rank matchup is_playoff year month day page per]
+      [rikishi against_rank at_rank matchup technique technique_category 
+       is_playoff year month day page per]
       (response 
        (mysql/get-bout-list
         (merge
@@ -263,6 +270,8 @@
           :against-rank (rank/rank-keyword-to-str against_rank)
           :against-rank-value (rank/get-rank-value {:rank against_rank :year year :month month})
           :at-rank (rank/rank-keyword-to-str at_rank)
+          :technique technique
+          :technique-category technique_category
           :is-playoff is_playoff
           :year year
           :month month
@@ -281,7 +290,8 @@
     
     ;; wins :rikishi had vs :against_rank, e.g. maegashira_1
     (GET "/win/:rikishi/:against_rank" 
-      [rikishi against_rank at_rank matchup is_playoff year month day page per]
+      [rikishi against_rank at_rank matchup technique technique_category 
+       is_playoff year month day page per]
       (response
        (mysql/get-bout-list
         (merge
@@ -290,6 +300,8 @@
           :against-rank-value (rank/get-rank-value {:rank against_rank :year year :month month})
           :at-rank (rank/rank-keyword-to-str at_rank)
           :winner rikishi
+          :technique technique
+          :technique-category technique_category
           :is-playoff is_playoff
           :year year
           :month month
@@ -308,7 +320,8 @@
     
     ;; losses :rikishi had to :against_rank
     (GET "/lose/:rikishi/:against_rank" 
-      [rikishi against_rank at_rank matchup is_playoff year month day page per]
+      [rikishi against_rank at_rank matchup technique technique_category 
+       is_playoff year month day page per]
       (response
        (mysql/get-bout-list
         (merge
@@ -316,7 +329,9 @@
           :against-rank (rank/rank-keyword-to-str against_rank)
           :against-rank-value (rank/get-rank-value {:rank against_rank :year year :month month})
           :at-rank (rank/rank-keyword-to-str at_rank)
-          :looser rikishi
+          :loser rikishi
+          :technique technique
+          :technique-category technique_category
           :is-playoff is_playoff
           :year year
           :month month
@@ -334,6 +349,65 @@
          (when per {:per per})))))
     )
 
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; ********************** UPSET ***********************
+  ;;   - Lists of upsets rikishi achieved or surrendered 
+  ;;   - routes take optional :comparision fn
+  ;;       from these choices, "=", ">", ">=", "<", "<="
+  ;;   - routes take optional :delta param
+  ;;       specifies how many rank levels the upset 
+  ;;       should be across e.g. :delta 5 means an upset 
+  ;;       by a rikishi 5 levels lower ranked
+  ;;   - routes take optional :year, :month, :day params
+  ;;   - routes take optional :page and :per
+  ;;   - defaulting to returning :page "1" with :per "15"
+  ;;   - defaulting to using :comparison <=, :delta ##Inf
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  
+  (context "/upset" []
+
+    ;; all upsets where the rikishi ranks meet the passed in delta
+    ;; (GET "/:delta" [delta comparison year month day page per])
+
+    ;; TODO - 
+    ;; rewrite the functions used to get upsets to
+    ;; be direct sql queries. stepping through the 
+    ;; entire bout list is too slow
+
+    ;; get all upsets that :rikishi won (defeated higher ranked opponent)
+    (GET "/win/:rikishi" [rikishi delta comparison year month day page per]
+      (response
+       (utils/paginate-list
+        (merge
+         {:item-list
+          (rank/wins-vs-higher-rank
+           (merge
+            {:rikishi rikishi
+             :year year
+             :month month
+             :day day}
+            ;; (when comparison {:comparison (or (get comparison-map comparison) <=)})
+            (when delta {:delta (Integer/parseInt delta)})))}
+         (when page {:page page})
+         (when per {:per per})))))
+
+    ;; get all bouts where :rikishi was upset (lost to lower ranked opponent)
+    (GET "/lose/:rikishi" [rikishi delta comparison year month day page per]
+      (response
+       (utils/paginate-list
+        (merge
+         {:item-list
+          (rank/losses-to-lower-rank
+           (merge
+            {:rikishi rikishi
+             :year year
+             :month month
+             :day day}
+            ;; (when comparison {:comparison (or (get comparison-map comparison) <=)})
+            (when delta {:delta (Integer/parseInt delta)})))}
+         (when page {:page page})
+         (when per {:per per}))))))
+
     ;; TODO--
     ;; Ben has techniques are grouped into 4 categories
     ;; chest to chest - moving forward
@@ -346,34 +420,43 @@
     ;; so ex: hatakikomi is colored red for its category color
     ;; categories have colors!
   
-  ;; general info about techniques
-  (context "/technique" []
-    ; technique list
-    ; category list
-    ; get technique category
-    ; list techniques in each category
-    )
+    ; wins by technique against rank
+    ; loses to technique agaisnt rank
   
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; * Lists of bouts against techniques *
-  ;;   ("How does endo do against oshidashi?")
-  ;;  - all routes take these optional params
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; ******************** PERFORM ***************************
+  ;;   - Lists of bouts by rank and technique
+  ;;   - "How do ozeki perform? Against oshidashi?"
+  ;;
+  ;;   - All routes take these optional params
   ;;     ...
   ;;     :is_playoff => pass true to get playoff matches only 
   ;;     :year, :month, :day => specify as you wish
-  ;;  - routes take optional :page and :per
-  ;;  - defaulting to returning :page "1" with :per "15"
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;  - Routes take optional :page and :per
+  ;;  - Defaults to returning :page "1" with :per "15"
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  
   (context "/perform" []
-    ; also take technique category for all these
-    ; wins by technique, all rikishi
-    ; loses to technique, all rikishi
-    ; wins by technique by rikishi
-    ; loses to technique by rikishi
-    ; wins by technique against rikishi
-    ; wins by technique against rank
-    ; loses to technique agaisnt rank
-    ; loses to technique agaisnt rikishi
+    
+    ;; all bouts, wins, and losses by rank
+    ;; (GET "/:rank")
+    ;; (GET "/win/:rank")
+    ;; (GET "/lose/:rank")
+    
+    ;; all bouts, wins, and losses by rank and technique
+    ;; (GET "/:rank/:technique" [technique year month day page per]
+    ;;   (response
+    ;;    (mysql/get-bout-list
+    ;;     (merge
+    ;;      {:technique technique
+    ;;       :year year
+    ;;       :month month
+    ;;       :day day
+    ;;       :paginate true}
+    ;;      (when page {:page page})
+    ;;      (when per {:per per})))))
+    ;;(GET "/win/:rank/:technique" )
+    ;;(GET "/lose/:rank/:technique")
     )
   
   (route/not-found "Route Not Found"))

@@ -35,6 +35,10 @@
 ;; TODO -- i'm having issues changing namespaces
 ;; in the repl and accessing the vars inside
 
+;; TODO -- technique_ja is deprecated, move to using
+;; technique, technique_en, technique_category
+;; the japanese technique will be just called "technique"
+
 (def technique-info (atom {}))
 
 (def technique-info-filepath "./metadata/technique-info.json")

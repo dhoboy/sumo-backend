@@ -109,6 +109,24 @@
       path))
     nil))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Translate string to keyword
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn str->keyword
+  "given a string, returns it as a keyword.
+   handles input validation checking so you don't
+   have to everywhere"
+  [str]
+  (when
+    (and
+      (string? str)
+      (not (clojure.string/blank? str)))
+    (-> str
+        clojure.string/trim
+        clojure.string/lower-case
+        keyword)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Compare Rikishi bout history according to passed in function
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -117,26 +117,46 @@
 ;;; Technique Queries
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defn list-techniques
+  "list all techniques used in bouts optionally constrained
+   to passed in year, month, day params"
+  [{:keys [year month day]}]
+  (jdbc/query
+   mysql-db
+   (sql/format
+    (sql/build
+     :select [:technique :technique_en :technique_category]
+     :modifiers [:distinct]
+     :from :bout
+     :where
+       (if (or year month day)
+         (concat
+           [:and]
+           (when year [[:= :year year]])
+           (when month [[:= :month month]])
+           (when day [[:= :day day]]))
+         true)))))
+
 ; not sure if this is needed, leaving for now
 (defn techniques-used
   "returns map of techniques used in the passed in tournament year and month.
-   map keys are the technique_ja Japanese name for each technique
+   map keys are the technique Japanese name for each technique
    e.g. {:oshidashi {:jp 'oshidashi' :en 'Frontal push out' :cat 'push'}}"
   [{:keys [year month]}]
   (reduce
-    (fn [acc {:keys [technique technique_ja technique_category]}]
+    (fn [acc {:keys [technique technique_en technique_category]}]
       (assoc
         acc
-        (keyword (clojure.string/lower-case technique_ja))
-        {:en technique :jp technique_ja :cat technique_category}))
+        (keyword (clojure.string/lower-case technique_en))
+        {:en technique_en :jp technique :cat technique_category}))
       {}
       (filter
-        #(some? (:technique_ja %))
+        #(some? (:technique %))
         (jdbc/query
           mysql-db
           (sql/format
             (sql/build
-              :select [:technique :technique_ja :technique_category]
+              :select [:technique :technique_en :technique_category]
               :modifiers [:distinct]
               :from :bout
               :where 
@@ -185,14 +205,46 @@
 (defn list-tournaments
   "list all tournaments data exists for"
   []
-  (jdbc/query 
-    mysql-db 
+  (jdbc/query
+    mysql-db
     (sql/format
       (sql/build
         :select [:month :year]
         :modifiers [:distinct]
         :from :bout
         :order-by [[:year :desc] [:month :desc]]))))
+
+  (defn get-wins-in-tournament
+    "returns list of rikishi wins in tournament"
+    [{:keys [year month]}]
+    (jdbc/query
+      mysql-db
+      (sql/format
+        (sql/build ; column is winner, as rikishi... count(winner) as wins
+          :select [[:winner :rikishi] [:%count.winner :wins]]
+          :from :bout
+          :where 
+            [:and
+              [:= :year year]
+              [:= :month month]]
+          :group-by :winner
+          :order-by [[:%count.winner :desc]]))))
+
+  (defn get-losses-in-tournament
+    "returns list of rikishi losses in tournament"
+    [{:keys [year month]}]
+    (jdbc/query
+      mysql-db
+      (sql/format
+      (sql/build
+        :select [[:loser :rikishi] [:%count.loser :losses]]
+        :from :bout
+        :where
+        [:and
+        [:= :year year]
+        [:= :month month]]
+        :group-by :loser
+        :order-by [[:%count.loser :asc]]))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Optionally Paginated Bout List Queries
@@ -204,43 +256,49 @@
    optionally takes--
      :winner, :loser, :rank, :opponent-rank, 
      :is-playoff, :year, :month, and :day params"
-  [{:keys [rikishi opponent winner loser rank opponent-rank is-playoff year month day]}]
+  [{:keys [rikishi opponent winner loser technique technique-category 
+           rank opponent-rank is-playoff year month day]}]
   [:select :*
    :from :bout
    :where
      (concat
-       [:and
-         [:or
-           [:and [:= :east rikishi] [:= :west opponent]]
-           [:and [:= :east opponent] [:= :west rikishi]]]]
-       (when winner [[:= :winner winner]])
-       (when loser [[:= :loser loser]])
-       (when rank [[:or
-                    [:and [:= :east rikishi] [:= :east_rank rank]]
-                    [:and [:= :west rikishi] [:= :west_rank rank]]]])
-       (when opponent-rank [[:or
-                             [:and [:= :east opponent] [:= :east_rank opponent-rank]]
-                             [:and [:= :west opponent] [:= :west_rank opponent-rank]]]])
-       (when is-playoff [[:= :is_playoff 1]]) ; rikishi face each other twice on same day to break tie
-       (when year [[:= :year year]])
-       (when month [[:= :month month]])
-       (when day [[:= :day day]]))])
+      [:and
+       [:or
+        [:and [:= :east rikishi] [:= :west opponent]]
+        [:and [:= :east opponent] [:= :west rikishi]]]]
+      (when winner [[:= :winner winner]])
+      (when loser [[:= :loser loser]])
+      (when technique [[:= :technique technique]])
+      (when technique-category [[:= :technique_category technique-category]])
+      (when rank [[:or
+                   [:and [:= :east rikishi] [:= :east_rank rank]]
+                   [:and [:= :west rikishi] [:= :west_rank rank]]]])
+      (when opponent-rank [[:or
+                            [:and [:= :east opponent] [:= :east_rank opponent-rank]]
+                            [:and [:= :west opponent] [:= :west_rank opponent-rank]]]])
+      (when is-playoff [[:= :is_playoff 1]]) ; rikishi face each other twice on same day to break tie
+      (when year [[:= :year year]])
+      (when month [[:= :month month]])
+      (when day [[:= :day day]]))])
 
 (defn build-bouts-by-rikishi-query
   "gets all bouts by :rikishi. 
    optionally takes--
      :winner, :loser, :rank, :is-playoff, 
      :year, :month, and :day params"
-  [{:keys [rikishi winner loser rank is-playoff year month day]}]
+  [{:keys [rikishi winner loser technique technique-category 
+           rank is-playoff year month day]}]
   [:select :*
    :from :bout
    :where
    (let [rikishi-clause [:or [:= :east rikishi] [:= :west rikishi]]]
-     (if (or winner loser rank is-playoff year month day)
+     (if (or winner loser technique technique-category rank is-playoff year month day)
        (concat
         [:and rikishi-clause]
         (when winner [[:= :winner winner]])
         (when loser [[:= :loser loser]])
+        (when technique [[:= :technique technique]])
+        (when technique-category [[:= :technique_category technique-category]])
         (when rank [[:or
                      [:and [:= :east rikishi] [:= :east_rank rank]]
                      [:and [:= :west rikishi] [:= :west_rank rank]]]])
@@ -253,9 +311,10 @@
 (defn build-rikishi-bouts-against-rank-query
   "gets all bouts by :rikishi against :against-rank.
    optionally takes--
-     :at-rank, :winner, :loser, :comparison,
-     :is-playoff, :year, :month, and :day params"
-  [{:keys [rikishi against-rank against-rank-value at-rank comparison winner loser is-playoff year month day]}]
+     :at-rank, :winner, :loser, :technique, :technique-category,
+     :comparison, :is-playoff, :year, :month, and :day params"
+  [{:keys [rikishi against-rank against-rank-value at-rank comparison winner loser 
+           technique technique-category is-playoff year month day]}]
   [:select :*
    :from :bout
    :where
@@ -267,11 +326,13 @@
                                [:or
                                 [:and [:= :east rikishi] [:= :west_rank against-rank]]
                                 [:and [:= :west rikishi] [:= :east_rank against-rank]]])]
-     (if (or at-rank winner loser is-playoff year month day)
+     (if (or at-rank winner loser technique technique-category is-playoff year month day)
        (concat
         [:and rikishi-clause against-rank-clause]
         (when winner [[:= :winner winner]])
         (when loser [[:= :loser loser]])
+        (when technique [[:= :technique technique]])
+        (when technique-category [[:= :technique_category technique-category]])
         (when at-rank [[:or
                         [:and [:= :east rikishi] [:= :east_rank at-rank]]
                         [:and [:= :west rikishi] [:= :west_rank at-rank]]]])
@@ -286,19 +347,21 @@
    optionally takes--
      :winner, :loser, :is-playoff,
      :year, :month, and :day params"
-  [{:keys [winner loser is-playoff year month day]}]
+  [{:keys [winner loser technique technique-category is-playoff year month day]}]
   [:select :*
    :from :bout
    :where
-     (if (or winner loser is-playoff year month day)
+     (if (or winner loser technique technique-category is-playoff year month day)
        (concat
-         [:and]
-         (when winner [[:= :winner winner]])
-         (when loser [[:= :loser loser]])
-         (when is-playoff [[:= :is_playoff 1]]) ; rikishi face each other twice on same day to break tie
-         (when year [[:= :year year]])
-         (when month [[:= :month month]])
-         (when day [[:= :day day]]))
+        [:and]
+        (when winner [[:= :winner winner]])
+        (when loser [[:= :loser loser]])
+        (when technique [[:= :technique technique]])
+        (when technique-category [[:= :technique_category technique-category]])
+        (when is-playoff [[:= :is_playoff 1]]) ; rikishi face each other twice on same day to break tie
+        (when year [[:= :year year]])
+        (when month [[:= :month month]])
+        (when day [[:= :day day]]))
        true)])
 
 ;; runs bout-list query against the database, with optional limit and offset pagination
@@ -390,7 +453,7 @@
 
 (defn write-bout
   "write a bout's information to the database"
-  [{:keys [east west is_playoff technique technique_ja technique_category date]}]
+  [{:keys [east west is_playoff technique_en technique technique_category date]}]
   (jdbc/insert-multi!
     mysql-db
     :bout
@@ -402,7 +465,7 @@
       :loser (utils/get-bout-loser east west)
       :is_playoff is_playoff
       :technique technique
-      :technique_ja technique_ja
+      :technique_en technique_en
       :technique_category technique_category
       :year (:year date)
       :month (:month date)

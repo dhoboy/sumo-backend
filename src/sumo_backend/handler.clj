@@ -20,6 +20,18 @@
 ;; see about deriving urls for theses matches 
 ;; on nhk japan site
 
+;; TODO--
+;; Ben has techniques grouped into 4 categories
+;; chest to chest - moving forward
+;; chset to chest - throwing side
+;; arms length - moving forward
+;; arms length - using opponents weight against them
+
+;; in FE, color code the japanese technique word
+;; colors for the type of technique
+;; so ex: hatakikomi is colored red for its category color
+;; categories have colors!
+
 (defroutes app-routes
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; ******* Rikishi information *************
@@ -29,6 +41,7 @@
   
   (context ["/rikishi"] []
     
+    ;; TODO-- 
     ;; Route for highest rank achieved, and tournaments
     ;; rikishi held that rank? could also be derived 
     ;; from rikishi-rank-over-time
@@ -84,6 +97,7 @@
             (when per {:per per})
             (when (and (nil? page) (nil? per)) {:all true})))))
     
+    ;; TODO -- add in groups of wins / losses occuring at each rank?
     ;; basic stats on techniques and categories rikishi wins / looses by
     (GET "/technique_breakdown/:name" [name year month day page per]
       (response
@@ -155,7 +169,8 @@
     ;; takes optional :year :month :day params
     ;; defaults to returning all sets of--
     ;; technique, technique_en, and technique_category 
-    ;; found in database
+    ;; found in database, else returns them for
+    ;; specified :year, :month, :day
     (GET "/list" [year month day page per]
       (response
         (utils/paginate-list
@@ -175,7 +190,6 @@
             (when per {:per per})
             (when (and (nil? page) (nil? per)) {:all true})))))
     
-    ;; TODO -- add in what rank uses technique?
     ;; rikishi wins and losses by a certain technique
     ;; takes optional :year :month :day params
     (GET "/details/:technique" [technique year month day page per]
@@ -187,14 +201,14 @@
                []
                {:wins-by-technique
                 (utils/add-percent-to-list
-                  (db/get-wins-by-technique 
+                  (db/get-all-wins-by-technique 
                     {:technique technique
                      :year year
                      :month month
                      :day day}))}
                {:losses-to-technique
                 (utils/add-percent-to-list
-                  (db/get-losses-to-technique 
+                  (db/get-all-losses-to-technique 
                     {:technique technique
                      :year year
                      :month month
@@ -203,7 +217,6 @@
             (when per {:per per})
             (when (and (nil? page) (nil? per)) {:all true})))))
     
-    ;; TODO -- add in what rank uses which category?
     ;; rikishi wins and losses by a certain technique category
     ;; takes optional :year :month :day params
     (GET "/category_details/:category" [category year month day page per]
@@ -213,16 +226,16 @@
             {:item-list
              (conj
                []
-               {:wins-by-technique-category
+               {:rikishi-wins-by-technique-category
                 (utils/add-percent-to-list
-                  (db/get-wins-by-technique-category 
+                  (db/get-all-wins-by-technique-category 
                     {:category category
                      :year year 
                      :month month
                      :day day}))}
-               {:losses-to-technique-category
+               {:rikishi-losses-to-technique-category
                 (utils/add-percent-to-list
-                  (db/get-losses-to-technique-category 
+                  (db/get-all-losses-to-technique-category 
                     {:category category
                      :year year
                      :month month
@@ -251,11 +264,6 @@
   
   (context ["/bout"] []
     
-    ;; TODO - add support for is_upset to all of these
-    ;; its crude, if you want more precise upset stuff, see 
-    ;; upset routes, but it is useful to see upsets in these
-    ;; bout list calls
-    
     ;; all bouts.
     ;; e.g. /bout/list?year=2021&winner=endo
     (GET "/list" 
@@ -268,7 +276,7 @@
              :loser loser
              :technique technique
              :technique-category technique_category
-             :is-playoff is_playoff
+             :is-playoff is_playoff           
              :year year
              :month month
              :day day
@@ -340,7 +348,7 @@
   ;;      :technique_category => technique category
   ;;      :is_playoff  => pass true to get playoff matches only
   ;;      :year, :month, :day => specify as you wish
-  ;;   - Pass nothing back for matchup, defaults to specified rank only
+  ;;   - Pass nothing for matchup, defaults to specified rank only
   ;;   - Routes take optional :page and :per
   ;;   - Defaults to returning :page "1" with :per "15"
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -446,29 +454,33 @@
   ;;   - Lists of upsets rikishi achieved or surrendered 
   ;;   - "How many time did Endo beat someone 5 ranks 
   ;;      higher than himself?"
-  ;;   - Allows for more rank-delta specificity than BOUT 
-  ;;      via the matchup param
+  ;;
   ;;   - All routes take these optional params
   ;;      :rank_delta => difference between rank levels
   ;;      :matchup => "includes_larger", "larger_only",
   ;;                  "includes_smaller", "smaller_only"
+  ;;      :technique => technique
+  ;;      :technique_category => technique category
   ;;      :is_playoff  => pass true to get playoff matches only
   ;;      :year, :month, :day => specify as you wish
-  ;;   - Pass nothing back for matchup, defaults to specified rank only
+  ;;   - Pass nothing for matchup, defaults to specified rank-delta only
   ;;   - Routes take optional :page and :per
   ;;   - Defauls to returning :page "1" with :per "15"
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   
   (context "/upset" []
 
-    ;; TODO -- add technique and technique category to upsets?
     ;; all upsets where the rikishi ranks meet the passed in rank-delta
+    ;; e.g. /upset/list?rank_delta=10&matchup=includes_larger&technique_category=push
+    ;; - "give me all upsets of 10 rank levels or higher where the technique category was push"
     (GET "/list"
-      [rank_delta is_playoff matchup year month day page per]
+      [rank_delta matchup technique technique_category is_playoff year month day page per]
       (response 
         (db/get-bout-list
           (merge
             {:rank-delta rank_delta
+             :technique technique
+             :technique-category technique_category
              :is-playoff is_playoff
              :year year
              :month month
@@ -487,12 +499,14 @@
     
     ;; get all upsets that :rikishi won (defeated higher ranked opponent)
     (GET "/win/:rikishi" 
-      [rikishi rank_delta matchup is_playoff year month day page per]
+      [rikishi rank_delta matchup technique technique_category is_playoff year month day page per]
       (response
         (db/get-bout-list
           (merge
             {:winner rikishi
              :rank-delta rank_delta
+             :technique technique
+             :technique-category technique_category
              :is-playoff is_playoff
              :year year
              :month month
@@ -511,12 +525,14 @@
 
     ;; get all bouts where :rikishi was upset (lost to lower ranked opponent)
     (GET "/lose/:rikishi" 
-      [rikishi rank_delta matchup is_playoff year month day page per]
+      [rikishi rank_delta matchup technique technique_category is_playoff year month day page per]
       (response
         (db/get-bout-list
           (merge
             {:loser rikishi
              :rank-delta rank_delta
+             :technique technique
+             :technique-category technique_category
              :is-playoff is_playoff
              :year year
              :month month
@@ -534,21 +550,6 @@
             (when per {:per per})))))
     )
 
-    ;; TODO--
-    ;; Ben has techniques are grouped into 4 categories
-    ;; chest to chest - moving forward
-    ;; chset to chest - throwing side
-    ;; arms lenght - moving forward
-    ;; arms length - using opponents weight against them
-  
-    ;; color code the japanese technique word
-    ;; colors for the type of technique
-    ;; so ex: hatakikomi is colored red for its category color
-    ;; categories have colors!
-  
-    ; wins by technique against rank
-    ; loses to technique agaisnt rank
-  
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; ******************** PERFORM ***************************
   ;;   - Lists of bouts by rank and technique

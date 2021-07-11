@@ -88,34 +88,39 @@
 (defn get-all-ranks-in-tournament
   "returns all ranks competing in a tournament"
   [{:keys [month year]}] ; hash set of every rank
-  (into #{} ; how can this be done in one sql call?
+  (into #{} ; @bslawski, can this be done in one sql call?
     (concat
       (map
         #(:east_rank %)
-        (jdbc/query mysql-db (sql/format
-          (sql/build
-            :select :east_rank
-            :modifiers [:distinct]
-            :from :bout
-            :where
-            [:and
-              [:= :year year]
-              [:= :month month]]))))
+        (jdbc/query 
+          mysql-db 
+          (sql/format
+            (sql/build
+              :select :east_rank
+              :modifiers [:distinct]
+              :from :bout
+              :where
+              [:and
+               [:= :year year]
+               [:= :month month]]))))
       (map
         #(:west_rank %)
-        (jdbc/query mysql-db (sql/format
-          (sql/build
-            :select :west_rank
-            :modifiers [:distinct]
-            :from :bout
-            :where
-            [:and
-            [:= :year year]
-            [:= :month month]])))))))
+        (jdbc/query 
+          mysql-db 
+          (sql/format
+            (sql/build
+              :select :west_rank
+              :modifiers [:distinct]
+              :from :bout
+              :where
+              [:and
+               [:= :year year]
+               [:= :month month]])))))))
 
   (defn get-rikishi-rank-in-tournament
     "returns rikishi's rank string and value in given tournament,
-     returns {:rank nil :rank-value nil} if rikishi did not compete in tournament"
+     returns {:rank nil :rank-value nil}
+     if rikishi did not compete in tournament"
     [{:keys [rikishi month year]}]
     (if-let [bout (first
                     (jdbc/query
@@ -164,6 +169,7 @@
            (when day [[:= :day day]]))
          true)))))
 
+;; wins / losses for rikishi with technique
 (defn get-rikishi-wins-by-technique
   "returns techniques rikishi has won by and frequency"
   [{:keys [rikishi year month day]}]
@@ -243,8 +249,9 @@
         (when day [[:= :day day]]))
       :group-by :technique_category
       :order-by [[:%count.technique_category :desc]]))))
-
-(defn get-wins-by-technique
+    
+;; all wins / losses for technique
+(defn get-all-wins-by-technique
   "returns rikishi and number of times they have won with technique"
   [{:keys [technique year month day]}]
   (jdbc/query
@@ -263,7 +270,7 @@
         :group-by :winner
         :order-by [[:%count.winner :desc]]))))
 
-(defn get-wins-by-technique-category
+(defn get-all-wins-by-technique-category
   "returns rikishi and number of times they have won with technique category"
   [{:keys [category year month day]}]
   (jdbc/query
@@ -282,7 +289,7 @@
         :group-by :winner
         :order-by [[:%count.winner :desc]]))))
 
-(defn get-losses-to-technique
+(defn get-all-losses-to-technique
   "returns rikishi and number of times they have lost to technique"
   [{:keys [technique year month day]}]
   (jdbc/query
@@ -301,7 +308,7 @@
         :group-by :loser
         :order-by [[:%count.loser :desc]]))))
 
-(defn get-losses-to-technique-category
+(defn get-all-losses-to-technique-category
   "returns rikishi and number of times they have lost to technique category"
   [{:keys [category year month day]}]
   (jdbc/query
@@ -319,7 +326,7 @@
           (when day [[:= :day day]]))
         :group-by :loser
         :order-by [[:%count.loser :desc]]))))
-  
+      
 ; not sure if this is needed, leaving for now
 (defn techniques-used
   "returns map of techniques used in the passed in tournament year and month.
@@ -442,15 +449,15 @@
   "given a :rikishi and :opponent, returns all bouts between the two.
    optionally takes--
      :winner, :loser, :rank, :opponent-rank, 
-     :is-playoff, :year, :month, and :day params"
-  [{:keys [rikishi opponent winner loser technique technique-category 
-           rank opponent-rank is-playoff year month day]}]
-  [:select :*
+     :is-playoff, :year, :month, :day, and :total-only params"
+  [{:keys [rikishi opponent winner loser technique technique-category
+           rank opponent-rank is-playoff year month day total-only]}]
+  [:select (if (some? total-only) [[:%count.* :total]] :*)
    :from :bout
    :where
-     (concat
+    (concat
       [:and
-       [:or
+        [:or
         [:and [:= :east rikishi] [:= :west opponent]]
         [:and [:= :east opponent] [:= :west rikishi]]]]
       (when winner [[:= :winner winner]])
@@ -458,12 +465,12 @@
       (when technique [[:= :technique technique]])
       (when technique-category [[:= :technique_category technique-category]])
       (when rank [[:or
-                   [:and [:= :east rikishi] [:= :east_rank rank]]
-                   [:and [:= :west rikishi] [:= :west_rank rank]]]])
+                    [:and [:= :east rikishi] [:= :east_rank rank]]
+                    [:and [:= :west rikishi] [:= :west_rank rank]]]])
       (when opponent-rank [[:or
                             [:and [:= :east opponent] [:= :east_rank opponent-rank]]
                             [:and [:= :west opponent] [:= :west_rank opponent-rank]]]])
-      (when is-playoff [[:= :is_playoff 1]]) ; rikishi face each other twice on same day to break tie
+      (when is-playoff [[:= :is_playoff 1]]) ; fight twice on same day to break tie
       (when year [[:= :year year]])
       (when month [[:= :month month]])
       (when day [[:= :day day]]))])
@@ -472,10 +479,10 @@
   "gets all bouts by :rikishi. 
    optionally takes--
      :winner, :loser, :rank, :is-playoff, 
-     :year, :month, and :day params"
+     :year, :month, :day, and :total-only params"
   [{:keys [rikishi winner loser technique technique-category 
-           rank is-playoff year month day]}]
-  [:select :*
+           rank is-playoff year month day total-only]}]
+  [:select (if (some? total-only) [[:%count.* :total]] :*)
    :from :bout
    :where
    (let [rikishi-clause [:or [:= :east rikishi] [:= :west rikishi]]]
@@ -489,7 +496,7 @@
         (when rank [[:or
                      [:and [:= :east rikishi] [:= :east_rank rank]]
                      [:and [:= :west rikishi] [:= :west_rank rank]]]])
-        (when is-playoff [[:= :is_playoff 1]]) ; rikishi face each other twice on same day to break tie
+        (when is-playoff [[:= :is_playoff 1]]) ; fight twice on same day to break tie
         (when year [[:= :year year]])
         (when month [[:= :month month]])
         (when day [[:= :day day]]))
@@ -499,17 +506,26 @@
   "gets all bouts by :rikishi against :against-rank.
    optionally takes--
      :at-rank, :winner, :loser, :technique, :technique-category,
-     :comparison, :is-playoff, :year, :month, and :day params"
-  [{:keys [rikishi against-rank against-rank-value at-rank comparison winner loser 
-           technique technique-category is-playoff year month day]}]
-  [:select :*
+     :comparison, :is-playoff, :year, :month, :day, and :total-only params"
+  [{:keys [rikishi against-rank against-rank-value at-rank comparison winner loser
+           technique technique-category is-playoff year month day total-only]}]
+  [:select (if (some? total-only) [[:%count.* :total]] :*)
    :from :bout
    :where
    (let [rikishi-clause [:or [:= :east rikishi] [:= :west rikishi]]
-         against-rank-clause (if (and (some? comparison) (some? against-rank-value) (not= comparison "="))
+         against-rank-clause (if (and 
+                                   (some? comparison) 
+                                   (some? against-rank-value) 
+                                   (not= comparison "="))
                                [:or
-                                [:and [:= :east rikishi] [(keyword comparison) :west_rank_value against-rank-value]]
-                                [:and [:= :west rikishi] [(keyword comparison) :east_rank_value against-rank-value]]]
+                                 [:and 
+                                   [:= :east rikishi] 
+                                   [(keyword comparison) 
+                                     :west_rank_value against-rank-value]]
+                                 [:and 
+                                   [:= :west rikishi] 
+                                   [(keyword comparison) 
+                                     :east_rank_value against-rank-value]]]
                                [:or
                                 [:and [:= :east rikishi] [:= :west_rank against-rank]]
                                 [:and [:= :west rikishi] [:= :east_rank against-rank]]])]
@@ -532,39 +548,48 @@
 (defn build-upset-query
   "gets all bouts that are an upset of specified :rank-delta.
    optionally takes--
-   (or :winner :loser), :comparison, :is-playoff 
-   :year, :month, and :day params"
-  [{:keys [winner loser rank-delta comparison is-playoff year month day] :or {comparison "="}}]
-  [:select :*
+   (or :winner :loser), :comparison, :is-playoff, :technique
+   :technique-category, :year, :month, :day, and :total-only params"
+  [{:keys [winner loser rank-delta comparison technique technique-category
+           is-playoff year month day total-only] :or {comparison "="}}]
+  [:select (if (some? total-only) [[:%count.* :total]] :*)
    :from :bout
    :where
    (let [all-upsets-clause [:or 
-                             [(keyword comparison) [:- :west_rank_value :east_rank_value] rank-delta]
-                             [(keyword comparison) [:- :east_rank_value :west_rank_value] rank-delta]]
+                             [(keyword comparison) 
+                               [:- :west_rank_value :east_rank_value] rank-delta]
+                             [(keyword comparison) 
+                               [:- :east_rank_value :west_rank_value] rank-delta]]
          winner-clause [:and
                          [:= :winner winner]
                          [:or
                            [:and
                              [:= :east winner]
-                             [(keyword comparison) [:- :east_rank_value :west_rank_value] rank-delta]]
+                             [(keyword comparison) 
+                               [:- :east_rank_value :west_rank_value] rank-delta]]
                            [:and
                              [:= :west winner]
-                             [(keyword comparison) [:- :west_rank_value :east_rank_value] rank-delta]]]]
+                             [(keyword comparison) 
+                               [:- :west_rank_value :east_rank_value] rank-delta]]]]
          loser-clause [:and
                         [:= :loser loser]
                         [:or
                           [:and
                             [:= :east loser]
-                            [(keyword comparison) [:- :west_rank_value :east_rank_value] rank-delta]]
+                            [(keyword comparison) 
+                              [:- :west_rank_value :east_rank_value] rank-delta]]
                           [:and
                             [:= :west loser]
-                            [(keyword comparison) [:- :east_rank_value :west_rank_value] rank-delta]]]]]
+                            [(keyword comparison) 
+                              [:- :east_rank_value :west_rank_value] rank-delta]]]]]
      (concat
        [:and]
        (when (and (nil? winner) (nil? loser)) [all-upsets-clause])
        (when winner [winner-clause])
        (when loser [loser-clause])
-       (when is-playoff [[:= :is_playoff 1]]) ; rikishi face each other twice on same day to break tie
+       (when technique [[:= :technique technique]])
+       (when technique-category [[:= :technique_category technique-category]])
+       (when is-playoff [[:= :is_playoff 1]]) ; fight twice on same day to break tie
        (when year [[:= :year year]])
        (when month [[:= :month month]])
        (when day [[:= :day day]])))])
@@ -573,9 +598,10 @@
   "gets all bouts. 
    optionally takes--
      :winner, :loser, :is-playoff,
-     :year, :month, and :day params"
-  [{:keys [winner loser technique technique-category is-playoff year month day]}]
-  [:select :*
+     :year, :month, :day, and :total-only params"
+  [{:keys [winner loser technique technique-category is-playoff 
+           year month day total-only]}]
+  [:select (if (some? total-only) [[:%count.* :total]] :*)
    :from :bout
    :where
      (if (or winner loser technique technique-category is-playoff year month day)
@@ -585,7 +611,7 @@
         (when loser [[:= :loser loser]])
         (when technique [[:= :technique technique]])
         (when technique-category [[:= :technique_category technique-category]])
-        (when is-playoff [[:= :is_playoff 1]]) ; rikishi face each other twice on same day to break tie
+        (when is-playoff [[:= :is_playoff 1]]) ; fight twice on same day to break tie
         (when year [[:= :year year]])
         (when month [[:= :month month]])
         (when day [[:= :day day]]))
@@ -618,8 +644,11 @@
    also takes :page and :per string params to step through response pages"
   [{:keys [paginate page per] :or {page "1" per "15"} :as params}]
   (if paginate
-    {:pagination {:page (Integer/parseInt page) :per (Integer/parseInt per)}
-     :items (run-bout-list-query (merge {:page page :per per} params))}
+    {:pagination 
+      {:page (Integer/parseInt page)
+       :per (Integer/parseInt per)
+       :total (:total (first (run-bout-list-query (merge {:total-only true} params))))}
+      :items (run-bout-list-query (merge {:page page :per per} params))}
     (run-bout-list-query params)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;

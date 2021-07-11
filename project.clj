@@ -4,10 +4,11 @@
   :min-lein-version "2.0.0"
   :main sumo-backend.core
   :dependencies [[org.clojure/clojure "1.10.1"]
-                 [compojure "1.6.1"]
-                 [cheshire "5.10.0"]
+                 [org.clojure/core.async "1.3.618"]
                  [org.clojure/java.jdbc "0.7.11"]
                  [clojure.jdbc/clojure.jdbc-c3p0 "0.3.3"]
+                 [compojure "1.6.1"]
+                 [cheshire "5.10.0"]
                  [mysql/mysql-connector-java "5.1.6"]
                  [honeysql "1.0.444"]
                  [ring/ring-defaults "0.3.2"]

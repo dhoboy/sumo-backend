@@ -127,33 +127,19 @@
         clojure.string/lower-case
         keyword)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Compare Rikishi bout history according to passed in function
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Add percent to list
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn rikishi-comparison
-  "for a given rikishi
-   process all bout data, comparing
-   wins/losses according to passed in 
-   success-criteria function"
-  [rikishi outcome success-criteria results [bout & rest]] ; "endo" "lose" ...
-  (if (nil? bout) ; no more bouts, return results
-    results
-    (if (and
-          (rikishi-win-or-lose-bout
-            {:rikishi rikishi
-             :outcome outcome
-             :bout bout})
-          (success-criteria bout))
-      (rikishi-comparison ; save this bout and continue
-        rikishi
-        outcome
-        success-criteria
-        (conj results bout)
-        rest)
-      (rikishi-comparison ; move on, don't save this bout
-        rikishi
-        outcome
-        success-criteria
-        results
-        rest))))
+(defn add-percent-to-list
+  "given a list where each item has a :count key,
+   adds :percent of each item in the list"
+  [coll]
+  (let [total (reduce + (map #(:count %) coll))]
+    (map 
+      (fn [elem]
+        (assoc 
+          elem
+          :percent
+          (float (/ (:count elem) total))))
+      coll)))

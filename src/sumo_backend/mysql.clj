@@ -113,6 +113,33 @@
             [:= :year year]
             [:= :month month]])))))))
 
+  (defn get-rikishi-rank-in-tournament
+    "returns rikishi's rank string and value in given tournament,
+     returns {:rank nil :rank-value nil} if rikishi did not compete in tournament"
+    [{:keys [rikishi month year]}]
+    (if-let [bout (first
+                    (jdbc/query
+                      mysql-db
+                      (sql/format
+                        (sql/build
+                          :select :*
+                          :from :bout
+                          :where
+                          [:and
+                           [:or
+                            [:= :west rikishi]
+                            [:= :east rikishi]]
+                           [:= :year year]
+                           [:= :month month]]))))]
+      (if (=
+           (clojure.string/upper-case (:west bout))
+           (clojure.string/upper-case rikishi))
+        {:rank (:west_rank bout)
+         :rank-value (:west_rank_value bout)}
+        {:rank (:east_rank bout)
+         :rank-value (:east_rank_value bout)})
+      {:rank nil :rank-value nil}))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Technique Queries
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -137,6 +164,162 @@
            (when day [[:= :day day]]))
          true)))))
 
+(defn get-rikishi-wins-by-technique
+  "returns techniques rikishi has won by and frequency"
+  [{:keys [rikishi year month day]}]
+  (jdbc/query
+    mysql-db
+    (sql/format
+      (sql/build
+        :select [:technique :technique_en :technique_category [:%count.technique :count]]
+        :modifiers [:distinct]
+        :from :bout
+        :where
+        (concat
+          [:and]
+          [[:= :winner rikishi]]
+          (when year [[:= :year year]])
+          (when month [[:= :month month]])
+          (when day [[:= :day day]]))
+        :group-by :technique
+        :order-by [[:%count.technique :desc]]))))
+
+  (defn get-rikishi-wins-by-technique-category
+    "returns technique categories rikishi has won by and frequency"
+    [{:keys [rikishi year month day]}]
+    (jdbc/query
+      mysql-db
+      (sql/format
+        (sql/build
+          :select [:technique_category [:%count.technique_category :count]]
+          :modifiers [:distinct]
+          :from :bout
+          :where
+          (concat
+            [:and]
+            [[:= :winner rikishi]]
+            (when year [[:= :year year]])
+            (when month [[:= :month month]])
+            (when day [[:= :day day]]))
+          :group-by :technique_category
+          :order-by [[:%count.technique_category :desc]]))))
+
+(defn get-rikishi-losses-to-technique
+  "returns techniques rikishi has lost to and frequency"
+  [{:keys [rikishi year month day]}]
+  (jdbc/query
+    mysql-db
+    (sql/format
+      (sql/build
+        :select [:technique :technique_en :technique_category [:%count.technique :count]]
+        :modifiers [:distinct]
+        :from :bout
+        :where
+        (concat
+          [:and]
+          [[:= :loser rikishi]]
+          (when year [[:= :year year]])
+          (when month [[:= :month month]])
+          (when day [[:= :day day]]))
+        :group-by :technique
+        :order-by [[:%count.technique :desc]]))))
+
+(defn get-rikishi-losses-to-technique-category
+  "returns technique categories rikishi has lost to and frequency"
+  [{:keys [rikishi year month day]}]
+  (jdbc/query
+   mysql-db
+   (sql/format
+    (sql/build
+      :select [:technique_category [:%count.technique_category :count]]
+      :modifiers [:distinct]
+      :from :bout
+      :where
+      (concat
+        [:and]
+        [[:= :loser rikishi]]
+        (when year [[:= :year year]])
+        (when month [[:= :month month]])
+        (when day [[:= :day day]]))
+      :group-by :technique_category
+      :order-by [[:%count.technique_category :desc]]))))
+
+(defn get-wins-by-technique
+  "returns rikishi and number of times they have won with technique"
+  [{:keys [technique year month day]}]
+  (jdbc/query
+    mysql-db
+    (sql/format
+      (sql/build
+        :select [:winner [:%count.winner :count]]
+        :from :bout
+        :where
+        (concat 
+          [:and]
+          [[:= :technique technique]]
+          (when year [[:= :year year]])
+          (when month [[:= :month month]])
+          (when day [[:= :day day]]))
+        :group-by :winner
+        :order-by [[:%count.winner :desc]]))))
+
+(defn get-wins-by-technique-category
+  "returns rikishi and number of times they have won with technique category"
+  [{:keys [category year month day]}]
+  (jdbc/query
+    mysql-db
+    (sql/format
+      (sql/build
+        :select [:winner [:%count.winner :count]]
+        :from :bout
+        :where
+        (concat
+          [:and]
+          [[:= :technique_category category]]
+          (when year [[:= :year year]])
+          (when month [[:= :month month]])
+          (when day [[:= :day day]]))
+        :group-by :winner
+        :order-by [[:%count.winner :desc]]))))
+
+(defn get-losses-to-technique
+  "returns rikishi and number of times they have lost to technique"
+  [{:keys [technique year month day]}]
+  (jdbc/query
+    mysql-db
+    (sql/format
+      (sql/build
+        :select [:loser [:%count.loser :count]]
+        :from :bout
+        :where
+        (concat
+          [:and]
+          [[:= :technique technique]]
+          (when year [[:= :year year]])
+          (when month [[:= :month month]])
+          (when day [[:= :day day]]))
+        :group-by :loser
+        :order-by [[:%count.loser :desc]]))))
+
+(defn get-losses-to-technique-category
+  "returns rikishi and number of times they have lost to technique category"
+  [{:keys [category year month day]}]
+  (jdbc/query
+    mysql-db
+    (sql/format
+      (sql/build
+        :select [:loser [:%count.loser :count]]
+        :from :bout
+        :where
+        (concat
+          [:and]
+          [[:= :technique_category category]]
+          (when year [[:= :year year]])
+          (when month [[:= :month month]])
+          (when day [[:= :day day]]))
+        :group-by :loser
+        :order-by [[:%count.loser :desc]]))))
+  
 ; not sure if this is needed, leaving for now
 (defn techniques-used
   "returns map of techniques used in the passed in tournament year and month.
@@ -216,23 +399,25 @@
 
   (defn get-wins-in-tournament
     "returns list of rikishi wins in tournament"
-    [{:keys [year month]}]
+    [{:keys [year month rikishi]}]
     (jdbc/query
-      mysql-db
-      (sql/format
-        (sql/build ; column is winner, as rikishi... count(winner) as wins
-          :select [[:winner :rikishi] [:%count.winner :wins]]
-          :from :bout
-          :where 
-            [:and
-              [:= :year year]
-              [:= :month month]]
-          :group-by :winner
-          :order-by [[:%count.winner :desc]]))))
+     mysql-db
+     (sql/format
+      (sql/build ; column is winner, as rikishi... count(winner) as wins
+       :select [[:winner :rikishi] [:%count.winner :wins]]
+       :from :bout
+       :where 
+         (concat 
+           [:and
+             [:= :year year]
+             [:= :month month]]
+           (when rikishi [[:= :winner rikishi]]))
+       :group-by :winner
+       :order-by [[:%count.winner :desc]]))))
 
   (defn get-losses-in-tournament
     "returns list of rikishi losses in tournament"
-    [{:keys [year month]}]
+    [{:keys [year month rikishi]}]
     (jdbc/query
       mysql-db
       (sql/format
@@ -240,9 +425,11 @@
         :select [[:loser :rikishi] [:%count.loser :losses]]
         :from :bout
         :where
-        [:and
-        [:= :year year]
-        [:= :month month]]
+          (concat
+            [:and
+              [:= :year year]
+              [:= :month month]]
+            (when rikishi [[:= :loser rikishi]]))
         :group-by :loser
         :order-by [[:%count.loser :asc]]))))
 
@@ -342,6 +529,46 @@
         (when day [[:= :day day]]))
        [:and rikishi-clause against-rank-clause]))])
 
+(defn build-upset-query
+  "gets all bouts that are an upset of specified :rank-delta.
+   optionally takes--
+   (or :winner :loser), :comparison, :is-playoff 
+   :year, :month, and :day params"
+  [{:keys [winner loser rank-delta comparison is-playoff year month day] :or {comparison "="}}]
+  [:select :*
+   :from :bout
+   :where
+   (let [all-upsets-clause [:or 
+                             [(keyword comparison) [:- :west_rank_value :east_rank_value] rank-delta]
+                             [(keyword comparison) [:- :east_rank_value :west_rank_value] rank-delta]]
+         winner-clause [:and
+                         [:= :winner winner]
+                         [:or
+                           [:and
+                             [:= :east winner]
+                             [(keyword comparison) [:- :east_rank_value :west_rank_value] rank-delta]]
+                           [:and
+                             [:= :west winner]
+                             [(keyword comparison) [:- :west_rank_value :east_rank_value] rank-delta]]]]
+         loser-clause [:and
+                        [:= :loser loser]
+                        [:or
+                          [:and
+                            [:= :east loser]
+                            [(keyword comparison) [:- :west_rank_value :east_rank_value] rank-delta]]
+                          [:and
+                            [:= :west loser]
+                            [(keyword comparison) [:- :east_rank_value :west_rank_value] rank-delta]]]]]
+     (concat
+       [:and]
+       (when (and (nil? winner) (nil? loser)) [all-upsets-clause])
+       (when winner [winner-clause])
+       (when loser [loser-clause])
+       (when is-playoff [[:= :is_playoff 1]]) ; rikishi face each other twice on same day to break tie
+       (when year [[:= :year year]])
+       (when month [[:= :month month]])
+       (when day [[:= :day day]])))])
+
 (defn build-bouts-by-date-query
   "gets all bouts. 
    optionally takes--
@@ -367,7 +594,7 @@
 ;; runs bout-list query against the database, with optional limit and offset pagination
 (defn run-bout-list-query
   "returns a bout list using the appropriate query, optionally paginated"
-  [{:keys [rikishi opponent against-rank page per] :as params}]
+  [{:keys [rikishi opponent against-rank rank-delta page per] :as params}]
   (jdbc/query
     mysql-db
     (sql/format
@@ -376,6 +603,7 @@
           (cond ; bring in appropriate query given passed in params
             (and rikishi opponent) (build-rikishi-bout-history-query params)
             (and rikishi against-rank) (build-rikishi-bouts-against-rank-query params)
+            rank-delta (build-upset-query params)
             rikishi (build-bouts-by-rikishi-query params)
             :else (build-bouts-by-date-query params))
           (when (and page per) ; optionally add pagination

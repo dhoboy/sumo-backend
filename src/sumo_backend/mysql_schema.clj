@@ -41,7 +41,7 @@
 ;;   `loser` varchar(255) DEFAULT NULL,
 ;;   `is_playoff` tinyint(1) DEFAULT NULL,
 ;;   `technique` varchar(255) DEFAULT NULL,
-;;   `technique_ja` varchar(255) DEFAULT NULL,
+;;   `technique_en` varchar(255) DEFAULT NULL,
 ;;   `technique_category` varchar(255) DEFAULT NULL,
 ;;   `year` int(11) DEFAULT NULL,
 ;;   `month` int(11) DEFAULT NULL,
@@ -63,7 +63,7 @@
      [:loser "varchar(255)" :default :null]
      [:is_playoff "tinyint(1)" :default :null]
      [:technique "varchar(255)" :default :null]
-     [:technique_ja "varchar(255)" :default :null]
+     [:technique_en "varchar(255)" :default :null]
      [:technique_category "varchar(255)" :default :null]
      [:year "int(11)" :default :null]
      [:month "int(11)" :default :null]

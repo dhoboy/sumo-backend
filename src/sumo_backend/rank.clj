@@ -6,7 +6,7 @@
 
 ;; N.B. There are a different
 ;; number of maegashira each basho.
-;; All juryo ranks depend
+;; All juryo rank values depend
 ;; on how many maegashira there are per basho.
 
 ;; TODO--
@@ -225,10 +225,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn get-rank-string-in-tournament
-  "iterates over a list of tournaments,
+  "iterates over a list of bouts comprising a tournament,
    returns rank if found, else returns nil.
    given string 'TAKAKEISHO', returns string 'Ozeki'"
-  [rikishi [bout & rest]] ; ["TAKAKEISHO" { ..bout } (list {...} {...} ...)]
+  [rikishi [bout & rest]] ; ["TAKAKEISHO" { ..bout } '({...} {...} ...)]
   (if-let [rank (get-rank-string-in-bout {:rikishi rikishi :bout bout})]
     rank
     (if (empty? rest)
@@ -241,9 +241,9 @@
 
 (defn get-rikishi-current-rank
   "gets most recent rank for passed in rikishi name
-    given string 'hakuho' this is returned--
-    {:rank 'Yokozuna', :tournament { :month 7, :year 2020 }}
-    returns nil if no data exists for passed in rikishi"
+   given string 'hakuho' this is returned--
+   {:rank 'Yokozuna', :tournament { :month 7, :year 2020 }}
+   returns nil if no data exists for passed in rikishi"
   ([{:keys [rikishi]}] ; top-level
     (if (db/rikishi-exists? rikishi)
       (get-rikishi-current-rank
@@ -294,91 +294,3 @@
           rikishi
           rest
           rank-over-time))))))
-
-;; TODO--
-;; everything that uses rikishi-comparision is super slow
-;; replace all those calls with just sql calls when possible
-;; only use rikishi-comparison if it cant be accomplished in 
-;; sql first
-
-;;;;;;;;;;;;;;;;;;;;;;;
-;; Bouts Rikishi Lost
-;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn losses-to-rank
-  "given a rikishi and rank string,
-   return all bouts where rikishi lost.
-   optionally takes in comparision function
-   to specify rank relative to passed in rank"
-  [{:keys [rikishi comparison against-rank year month day] :or {comparison =}}] ; "endo" >= "ozeki"
-    (utils/rikishi-comparison ; all losses against ozeki or higher
-      rikishi
-      "lose" ; criteria is rikishi opponent is certain rank
-      #(let [against-rank-value (get-rank-value {:rank against-rank :year (:year %) :month (:month %)})
-             opponent-rank-value (get-opponent-rank-value-in-bout {:rikishi rikishi :bout %})]
-        (if (and against-rank-value opponent-rank-value)
-          (comparison against-rank-value opponent-rank-value)
-          false)) ; error getting rank for a certain rikisi + bout, move on, TODO: log this
-      '()
-      (db/get-bout-list {:rikishi rikishi :year year :month month :day day})))
-
-(defn losses-to-lower-rank
-  "Given a rikishi name string and optional 'delta' and 'comparison' fn pair,
-   Returns either all losses to lower ranks
-   or losses according to delta and comparison function
-   e.g. endo >= 2 is all losses to rikishi >= 2 ranks lower than endo
-   e.g. endo = 2 all losses to rikishi = 2 ranks lower than endo"
-  [{:keys [rikishi comparison delta year month day] :or {comparison <= delta ##Inf}}]
-    (utils/rikishi-comparison ; :comparison can be >, >=, =, <, <=
-      rikishi
-      "lose"
-      #(let [rikishi-rank-value (get-rank-value-in-bout {:rikishi rikishi :bout %})
-             opponent-rank-value (get-opponent-rank-value-in-bout {:rikishi rikishi :bout %})]
-        (if (and rikishi-rank-value opponent-rank-value)
-          (and ; opponent rank is lower and delta satisfies given comparision and delta
-            (> opponent-rank-value rikishi-rank-value)
-            (comparison (- opponent-rank-value rikishi-rank-value) delta))
-          false)) ; error getting rank for a certain rikisi + bout, move on, TODO: log this
-      '()
-      (db/get-bout-list {:rikishi rikishi :year year :month month :day day})))
-
-;;;;;;;;;;;;;;;;;;;;;;;
-;; Bouts Rikishi Won
-;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn wins-vs-rank
-  "given a rikishi and rank string or keyword,
-   return all bouts where rikishi won.
-   optionally takes in comparison function
-   to specify wins relative to passed in rank"
-  [{:keys [rikishi comparison against-rank year month day] :or {comparison =}}] ; "endo" >= "ozeki"
-    (utils/rikishi-comparison ; all wins against ozeki or higher
-      rikishi
-      "win" ; criteria: rikishi opponent is certain rank
-      #(let [against-rank-value (get-rank-value {:rank against-rank :year (:year %) :month (:month %)})
-             opponent-rank-value (get-opponent-rank-value-in-bout {:rikishi rikishi :bout %})]
-        (if (and against-rank-value opponent-rank-value)
-          (comparison against-rank-value opponent-rank-value)
-          false)) ; error getting rank for a certain rikisi + bout, move on, TODO: log this
-      '()
-      (db/get-bout-list {:rikishi rikishi :year year :month month :day day})))
-
-(defn wins-vs-higher-rank
-  "Given a rikishi name string and optional 'delta' and 'comparison' fn pair,
-   Returns either all wins against higher ranks,
-   or wins according to delta and comparison fn.
-   e.g. endo >= 2 is all losses to rikishi >= 2 ranks higher than endo
-   e.g. endo = 2 is all losses to rikishi = 2 ranks higher than endo"
-  [{:keys [rikishi comparison delta year month day] :or {comparison <= delta ##Inf}}]
-    (utils/rikishi-comparison ; :comparison can be >, >=, =, <, <=
-      rikishi
-      "win"
-      #(let [rikishi-rank-value (get-rank-value-in-bout {:rikishi rikishi :bout %})
-             opponent-rank-value (get-opponent-rank-value-in-bout {:rikishi rikishi :bout %})]
-        (if (and rikishi-rank-value opponent-rank-value)
-          (and ; rikishi rank is higher and delta satisfies given comparision and delta
-            (< opponent-rank-value rikishi-rank-value)
-            (comparison (- rikishi-rank-value opponent-rank-value) delta))
-          false)) ; error getting rank for a certain rikisi + bout, move on, TODO: log this
-      '()
-      (db/get-bout-list {:rikishi rikishi :year year :month month :day day})))

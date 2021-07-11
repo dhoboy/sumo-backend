@@ -6,9 +6,10 @@
 (require '[ring.util.response :refer [response]])
 (require '[jumblerg.middleware.cors :refer [wrap-cors]])
 (require '[sumo-backend.utils :as utils])
-(require '[sumo-backend.mysql :as mysql])
+(require '[sumo-backend.mysql :as db])
 (require '[sumo-backend.rank :as rank])
 (require '[sumo-backend.technique :as technique])
+(require '[sumo-backend.tournament :as tournament])
 
 ;; TODO--
 ;; plan out ui in terms of 
@@ -35,43 +36,81 @@
     ;; list of all rikishi
     (GET "/list" [page per]
       (response 
-       (utils/paginate-list
-        (merge
-         {:item-list (mysql/list-rikishi)}
-         (when page {:page page})
-         (when per {:per per})
-         (when (and (nil? page) (nil? per)) {:all true})))))
+        (utils/paginate-list
+          (merge
+            {:item-list (db/list-rikishi)}
+            (when page {:page page})
+            (when per {:per per})
+            (when (and (nil? page) (nil? per)) {:all true})))))
     
     ;; specific rikishi record
-    (GET "/:name/details" [name page per] 
+    (GET "/details/:name" [name page per] 
       (response 
-       (utils/paginate-list
-        (merge
-         {:item-list (mysql/get-rikishi name)}
-         (when page {:page page})
-         (when per {:per per})
-         (when (and (nil? page) (nil? per)) {:all true})))))
+        (utils/paginate-list
+          (merge
+            {:item-list (db/get-rikishi name)}
+            (when page {:page page})
+            (when per {:per per})
+            (when (and (nil? page) (nil? per)) {:all true})))))
     
     ;; rikishi current rank
     ;; current rank is rank in last basho rikishi competed in
-    (GET "/:name/current_rank" [name page per]
+    (GET "/current_rank/:name" [name page per]
       (response 
-       (utils/paginate-list
-        (merge
-         {:item-list [(rank/get-rikishi-current-rank {:rikishi name})]}
-         (when page {:page page})
-         (when per {:per per})
-         (when (and (nil? page) (nil? per)) {:all true})))))
+        (utils/paginate-list
+          (merge
+            {:item-list [(rank/get-rikishi-current-rank {:rikishi name})]}
+            (when page {:page page})
+            (when per {:per per})
+            (when (and (nil? page) (nil? per)) {:all true})))))
     
     ;; list of rikishi's rank changes over time
-    (GET "/:name/rank_over_time" [name page per]
+    (GET "/rank_over_time/:name" [name page per]
       (response 
-       (utils/paginate-list
-        (merge
-         {:item-list (rank/get-rikishi-rank-over-time {:rikishi name})}
-         (when page {:page page})
-         (when per {:per per})
-         (when (and (nil? page) (nil? per)) {:all true})))))
+        (utils/paginate-list
+          (merge
+            {:item-list (rank/get-rikishi-rank-over-time {:rikishi name})}
+            (when page {:page page})
+            (when per {:per per})
+            (when (and (nil? page) (nil? per)) {:all true})))))
+    
+    ;; list of rikishi tournament results over time
+    (GET "/results_over_time/:name" [name page per]
+      (response
+        (utils/paginate-list
+          (merge
+            {:item-list (tournament/get-rikishi-results-over-time {:rikishi name})}
+            (when page {:page page})
+            (when per {:per per})
+            (when (and (nil? page) (nil? per)) {:all true})))))
+    
+    ;; basic stats on techniques and categories rikishi wins / looses by
+    (GET "/technique_breakdown/:name" [name year month day page per]
+      (response
+        (utils/paginate-list
+          (merge
+            {:item-list 
+             (conj 
+               []
+               {:wins-by-technique-category
+                (utils/add-percent-to-list
+                  (db/get-rikishi-wins-by-technique-category
+                    {:rikishi name :year year :month month :day day}))}
+               {:wins-by-technique
+                (utils/add-percent-to-list
+                  (db/get-rikishi-wins-by-technique
+                    {:rikishi name :year year :month month :day day}))}
+               {:losses-to-technique-category
+                (utils/add-percent-to-list
+                  (db/get-rikishi-losses-to-technique-category
+                    {:rikishi name :year year :month month :day day}))}
+               {:losses-to-technique
+                (utils/add-percent-to-list
+                  (db/get-rikishi-losses-to-technique
+                    {:rikishi name :year year :month month :day day}))})}
+            (when page {:page page})
+            (when per {:per per})
+            (when (and (nil? page) (nil? per)) {:all true})))))
     )
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -82,30 +121,26 @@
   
   (context ["/tournament"] []
 
-    ; list of all tournaments data exists for
+    ;; list of all tournaments data exists for
     (GET "/list" [page per]
       (response 
-       (utils/paginate-list
-        (merge
-         {:item-list (mysql/list-tournaments)}
-         (when page {:page page})
-         (when per {:per per})
-         (when (and (nil? page) (nil? per)) {:all true})))))
+        (utils/paginate-list
+          (merge
+            {:item-list (db/list-tournaments)}
+            (when page {:page page})
+            (when per {:per per})
+            (when (and (nil? page) (nil? per)) {:all true})))))
 
-    ; details about tournament: rikishi records, location?
-    ; add makikoshi or kachikoshi to each rikishi too in the merge with
-    (GET "/:year/:month" [year month page per]
+    ;; TODO -- add tournament champion and location.
+    ;; details about tournament, e.g. rikishi records
+    (GET "/details/:year/:month" [year month page per]
       (response
-       (utils/paginate-list
-        (merge
-         {:item-list (apply 
-                      merge ;; need to do a merge with here?
-                      (concat
-                       (mysql/get-wins-in-tournament {:year year :month month})
-                       (mysql/get-losses-in-tournament {:year year :month month})))}
-         (when page {:page page})
-         (when per {:per per})
-         (when (and (nil? page) (nil? per)) {:all true})))))
+        (utils/paginate-list
+          (merge
+            {:item-list (tournament/build-rikishi-tournament-records {:year year :month month})}
+            (when page {:page page})
+            (when per {:per per})
+            (when (and (nil? page) (nil? per)) {:all true})))))
     )
   
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -116,33 +151,85 @@
   
   (context "/technique" []
     
-    ; technique list
-    ; takes optional :year :month :day params
-    ; defaults to returning all sets of technique,
-    ; technique_en, and technique_category found in database
+    ;; technique list
+    ;; takes optional :year :month :day params
+    ;; defaults to returning all sets of--
+    ;; technique, technique_en, and technique_category 
+    ;; found in database
     (GET "/list" [year month day page per]
       (response
-       (utils/paginate-list
-        (merge
-         {:item-list (mysql/list-techniques {:year year :month month :day day})}
-         (when page {:page page})
-         (when per {:per per})
-         (when (and (nil? page) (nil? per)) {:all true})))))
+        (utils/paginate-list
+          (merge
+            {:item-list (db/list-techniques {:year year :month month :day day})}
+            (when page {:page page})
+            (when per {:per per})
+            (when (and (nil? page) (nil? per)) {:all true})))))
     
-    ; list of all categories and technique keys classified within
+    ;; list of all categories and technique keys classified within
     (GET "/categories" [page per]
       (response
-       (utils/paginate-list
-        (merge
-         {:item-list (technique/get-categories)}
-         (when page {:page page})
-         (when per {:per per})
-         (when (and (nil? page) (nil? per)) {:all true})))))
+        (utils/paginate-list
+          (merge
+            {:item-list (technique/get-categories)}
+            (when page {:page page})
+            (when per {:per per})
+            (when (and (nil? page) (nil? per)) {:all true})))))
     
-     ;; could return stats about how many times this technique gets used
-     ;; who uses it and what rank uses it...
-     ;; (GET "/:technique" [])
+    ;; TODO -- add in what rank uses technique?
+    ;; rikishi wins and losses by a certain technique
+    ;; takes optional :year :month :day params
+    (GET "/details/:technique" [technique year month day page per]
+      (response
+        (utils/paginate-list
+          (merge
+            {:item-list 
+             (conj
+               []
+               {:wins-by-technique
+                (utils/add-percent-to-list
+                  (db/get-wins-by-technique 
+                    {:technique technique
+                     :year year
+                     :month month
+                     :day day}))}
+               {:losses-to-technique
+                (utils/add-percent-to-list
+                  (db/get-losses-to-technique 
+                    {:technique technique
+                     :year year
+                     :month month
+                     :day day}))})}
+            (when page {:page page})
+            (when per {:per per})
+            (when (and (nil? page) (nil? per)) {:all true})))))
     
+    ;; TODO -- add in what rank uses which category?
+    ;; rikishi wins and losses by a certain technique category
+    ;; takes optional :year :month :day params
+    (GET "/category_details/:category" [category year month day page per]
+      (response
+        (utils/paginate-list
+          (merge
+            {:item-list
+             (conj
+               []
+               {:wins-by-technique-category
+                (utils/add-percent-to-list
+                  (db/get-wins-by-technique-category 
+                    {:category category
+                     :year year 
+                     :month month
+                     :day day}))}
+               {:losses-to-technique-category
+                (utils/add-percent-to-list
+                  (db/get-losses-to-technique-category 
+                    {:category category
+                     :year year
+                     :month month
+                     :day day}))})}
+            (when page {:page page})
+            (when per {:per per})
+            (when (and (nil? page) (nil? per)) {:all true})))))
     )
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -164,25 +251,30 @@
   
   (context ["/bout"] []
     
+    ;; TODO - add support for is_upset to all of these
+    ;; its crude, if you want more precise upset stuff, see 
+    ;; upset routes, but it is useful to see upsets in these
+    ;; bout list calls
+    
     ;; all bouts.
     ;; e.g. /bout/list?year=2021&winner=endo
     (GET "/list" 
       [winner loser technique technique_category 
        is_playoff year month day page per]
       (response
-       (mysql/get-bout-list
-        (merge
-         {:winner winner
-          :loser loser
-          :technique technique
-          :technique-category technique_category
-          :is-playoff is_playoff
-          :year year
-          :month month
-          :day day
-          :paginate true}
-         (if page {:page page} nil)
-         (if per  {:per per} nil)))))
+        (db/get-bout-list
+          (merge
+            {:winner winner
+             :loser loser
+             :technique technique
+             :technique-category technique_category
+             :is-playoff is_playoff
+             :year year
+             :month month
+             :day day
+             :paginate true}
+            (if page {:page page} nil)
+            (if per  {:per per} nil)))))
 
     ;; all bouts :rikishi is in.
     ;; takes optional :rank param for what rank rikishi was in the bout
@@ -191,21 +283,21 @@
       [rikishi winner loser technique technique_category 
        rank is_playoff year month day page per]
       (response
-       (mysql/get-bout-list
-        (merge
-         {:rikishi rikishi
-          :winner winner
-          :loser loser
-          :technique technique
-          :technique-category technique_category
-          :rank (rank/rank-keyword-to-str rank)
-          :is-playoff is_playoff
-          :year year
-          :month month
-          :day day
-          :paginate true}
-         (if page {:page page} nil)
-         (if per  {:per per} nil)))))
+        (db/get-bout-list
+          (merge
+            {:rikishi rikishi
+             :winner winner
+             :loser loser
+             :technique technique
+             :technique-category technique_category
+             :rank (rank/rank-keyword-to-str rank)
+             :is-playoff is_playoff
+             :year year
+             :month month
+             :day day
+             :paginate true}
+            (if page {:page page} nil)
+            (if per  {:per per} nil)))))
 
     ;; all bouts :rikishi is in with :opponent.
     ;; takes optional :rank param for what rank rikishi was in the bout
@@ -215,23 +307,23 @@
       [rikishi opponent winner loser technique technique_category 
        rank opponent_rank is_playoff year month day page per]
       (response
-       (mysql/get-bout-list
-        (merge
-         {:rikishi rikishi
-          :opponent opponent
-          :winner winner
-          :loser loser
-          :technique technique
-          :technique-category technique_category
-          :rank (rank/rank-keyword-to-str rank)
-          :opponent-rank (rank/rank-keyword-to-str opponent_rank)
-          :is-playoff is_playoff
-          :year year
-          :month month
-          :day day
-          :paginate true}
-         (if page {:page page} nil)
-         (if per  {:per per} nil)))))
+        (db/get-bout-list
+          (merge
+            {:rikishi rikishi
+             :opponent opponent
+             :winner winner
+             :loser loser
+             :technique technique
+             :technique-category technique_category
+             :rank (rank/rank-keyword-to-str rank)
+             :opponent-rank (rank/rank-keyword-to-str opponent_rank)
+             :is-playoff is_playoff
+             :year year
+             :month month
+             :day day
+             :paginate true}
+            (if page {:page page} nil)
+            (if per  {:per per} nil)))))
     )
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -264,149 +356,183 @@
       [rikishi against_rank at_rank matchup technique technique_category 
        is_playoff year month day page per]
       (response 
-       (mysql/get-bout-list
-        (merge
-         {:rikishi rikishi
-          :against-rank (rank/rank-keyword-to-str against_rank)
-          :against-rank-value (rank/get-rank-value {:rank against_rank :year year :month month})
-          :at-rank (rank/rank-keyword-to-str at_rank)
-          :technique technique
-          :technique-category technique_category
-          :is-playoff is_playoff
-          :year year
-          :month month
-          :day day
-          :paginate true} ; higher ranks have lower rank-value
-         (when (= matchup "includes_higher_ranks")
-           {:comparison "<="})
-         (when (= matchup "higher_ranks_only")
-           {:comparison "<"})
-         (when (= matchup "includes_lower_ranks")
-           {:comparison ">="})
-         (when (= matchup "lower_ranks_only")
-           {:comparison ">"})
-         (when page {:page page})
-         (when per {:per per})))))
+        (db/get-bout-list
+          (merge
+            {:rikishi rikishi
+             :against-rank (rank/rank-keyword-to-str against_rank)
+             :against-rank-value (rank/get-rank-value {:rank against_rank :year year :month month})
+             :at-rank (rank/rank-keyword-to-str at_rank)
+             :technique technique
+             :technique-category technique_category
+             :is-playoff is_playoff
+             :year year
+             :month month
+             :day day
+             :paginate true} ; higher ranks have lower rank-value
+            (when (= matchup "includes_higher_ranks")
+              {:comparison "<="})
+            (when (= matchup "higher_ranks_only")
+              {:comparison "<"})
+            (when (= matchup "includes_lower_ranks")
+              {:comparison ">="})
+            (when (= matchup "lower_ranks_only")
+              {:comparison ">"})
+            (when page {:page page})
+            (when per {:per per})))))
     
     ;; wins :rikishi had vs :against_rank, e.g. maegashira_1
     (GET "/win/:rikishi/:against_rank" 
       [rikishi against_rank at_rank matchup technique technique_category 
        is_playoff year month day page per]
       (response
-       (mysql/get-bout-list
-        (merge
-         {:rikishi rikishi
-          :against-rank (rank/rank-keyword-to-str against_rank)
-          :against-rank-value (rank/get-rank-value {:rank against_rank :year year :month month})
-          :at-rank (rank/rank-keyword-to-str at_rank)
-          :winner rikishi
-          :technique technique
-          :technique-category technique_category
-          :is-playoff is_playoff
-          :year year
-          :month month
-          :day day
-          :paginate true}
-         (when (= matchup "includes_higher_ranks")
-           {:comparison "<="})
-         (when (= matchup "higher_ranks_only")
-           {:comparison "<"})
-         (when (= matchup "includes_lower_ranks")
-           {:comparison ">="})
-         (when (= matchup "lower_ranks_only")
-           {:comparison ">"})
-         (when page {:page page})
-         (when per {:per per})))))
+        (db/get-bout-list
+          (merge
+            {:rikishi rikishi
+             :against-rank (rank/rank-keyword-to-str against_rank)
+             :against-rank-value (rank/get-rank-value {:rank against_rank :year year :month month})
+             :at-rank (rank/rank-keyword-to-str at_rank)
+             :winner rikishi
+             :technique technique
+             :technique-category technique_category
+             :is-playoff is_playoff
+             :year year
+             :month month
+             :day day
+             :paginate true}
+            (when (= matchup "includes_higher_ranks")
+              {:comparison "<="})
+            (when (= matchup "higher_ranks_only")
+              {:comparison "<"})
+            (when (= matchup "includes_lower_ranks")
+              {:comparison ">="})
+            (when (= matchup "lower_ranks_only")
+              {:comparison ">"})
+            (when page {:page page})
+            (when per {:per per})))))
     
     ;; losses :rikishi had to :against_rank
     (GET "/lose/:rikishi/:against_rank" 
       [rikishi against_rank at_rank matchup technique technique_category 
        is_playoff year month day page per]
       (response
-       (mysql/get-bout-list
-        (merge
-         {:rikishi rikishi
-          :against-rank (rank/rank-keyword-to-str against_rank)
-          :against-rank-value (rank/get-rank-value {:rank against_rank :year year :month month})
-          :at-rank (rank/rank-keyword-to-str at_rank)
-          :loser rikishi
-          :technique technique
-          :technique-category technique_category
-          :is-playoff is_playoff
-          :year year
-          :month month
-          :day day
-          :paginate true} ; higher ranks have lower rank-value
-         (when (= matchup "includes_higher_ranks")
-           {:comparison "<="})
-         (when (= matchup "higher_ranks_only")
-           {:comparison "<"})
-         (when (= matchup "includes_lower_ranks")
-           {:comparison ">="})
-         (when (= matchup "lower_ranks_only")
-           {:comparison ">"})
-         (when page {:page page})
-         (when per {:per per})))))
+        (db/get-bout-list
+          (merge
+            {:rikishi rikishi
+             :against-rank (rank/rank-keyword-to-str against_rank)
+             :against-rank-value (rank/get-rank-value {:rank against_rank :year year :month month})
+             :at-rank (rank/rank-keyword-to-str at_rank)
+             :loser rikishi
+             :technique technique
+             :technique-category technique_category
+             :is-playoff is_playoff
+             :year year
+             :month month
+             :day day
+             :paginate true} ; higher ranks have lower rank-value
+            (when (= matchup "includes_higher_ranks")
+              {:comparison "<="})
+            (when (= matchup "higher_ranks_only")
+              {:comparison "<"})
+            (when (= matchup "includes_lower_ranks")
+              {:comparison ">="})
+            (when (= matchup "lower_ranks_only")
+              {:comparison ">"})
+            (when page {:page page})
+            (when per {:per per})))))
     )
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; ********************** UPSET ***********************
   ;;   - Lists of upsets rikishi achieved or surrendered 
-  ;;   - routes take optional :comparision fn
-  ;;       from these choices, "=", ">", ">=", "<", "<="
-  ;;   - routes take optional :delta param
-  ;;       specifies how many rank levels the upset 
-  ;;       should be across e.g. :delta 5 means an upset 
-  ;;       by a rikishi 5 levels lower ranked
-  ;;   - routes take optional :year, :month, :day params
-  ;;   - routes take optional :page and :per
-  ;;   - defaulting to returning :page "1" with :per "15"
-  ;;   - defaulting to using :comparison <=, :delta ##Inf
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;   - "How many time did Endo beat someone 5 ranks 
+  ;;      higher than himself?"
+  ;;   - Allows for more rank-delta specificity than BOUT 
+  ;;      via the matchup param
+  ;;   - All routes take these optional params
+  ;;      :rank_delta => difference between rank levels
+  ;;      :matchup => "includes_larger", "larger_only",
+  ;;                  "includes_smaller", "smaller_only"
+  ;;      :is_playoff  => pass true to get playoff matches only
+  ;;      :year, :month, :day => specify as you wish
+  ;;   - Pass nothing back for matchup, defaults to specified rank only
+  ;;   - Routes take optional :page and :per
+  ;;   - Defauls to returning :page "1" with :per "15"
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   
   (context "/upset" []
 
-    ;; all upsets where the rikishi ranks meet the passed in delta
-    ;; (GET "/:delta" [delta comparison year month day page per])
-
-    ;; TODO - 
-    ;; rewrite the functions used to get upsets to
-    ;; be direct sql queries. stepping through the 
-    ;; entire bout list is too slow
-
-    ;; get all upsets that :rikishi won (defeated higher ranked opponent)
-    (GET "/win/:rikishi" [rikishi delta comparison year month day page per]
-      (response
-       (utils/paginate-list
-        (merge
-         {:item-list
-          (rank/wins-vs-higher-rank
-           (merge
-            {:rikishi rikishi
+    ;; TODO -- add technique and technique category to upsets?
+    ;; all upsets where the rikishi ranks meet the passed in rank-delta
+    (GET "/list"
+      [rank_delta is_playoff matchup year month day page per]
+      (response 
+        (db/get-bout-list
+          (merge
+            {:rank-delta rank_delta
+             :is-playoff is_playoff
              :year year
              :month month
-             :day day}
-            ;; (when comparison {:comparison (or (get comparison-map comparison) <=)})
-            (when delta {:delta (Integer/parseInt delta)})))}
-         (when page {:page page})
-         (when per {:per per})))))
+             :day day
+             :paginate true}
+            (when (= matchup "includes_larger")
+              {:comparison ">="})
+            (when (= matchup "larger_only")
+              {:comparison ">"})
+            (when (= matchup "includes_smaller")
+              {:comparison "<="})
+            (when (= matchup "smaller_only")
+              {:comparison "<"})
+            (when page {:page page})
+            (when per {:per per})))))
+    
+    ;; get all upsets that :rikishi won (defeated higher ranked opponent)
+    (GET "/win/:rikishi" 
+      [rikishi rank_delta matchup is_playoff year month day page per]
+      (response
+        (db/get-bout-list
+          (merge
+            {:winner rikishi
+             :rank-delta rank_delta
+             :is-playoff is_playoff
+             :year year
+             :month month
+             :day day
+             :paginate true}
+            (when (= matchup "includes_larger")
+              {:comparison ">="})
+            (when (= matchup "larger_only")
+              {:comparison ">"})
+            (when (= matchup "includes_smaller")
+              {:comparison "<="})
+            (when (= matchup "smaller_only")
+              {:comparison "<"})
+            (when page {:page page})
+            (when per {:per per})))))
 
     ;; get all bouts where :rikishi was upset (lost to lower ranked opponent)
-    (GET "/lose/:rikishi" [rikishi delta comparison year month day page per]
+    (GET "/lose/:rikishi" 
+      [rikishi rank_delta matchup is_playoff year month day page per]
       (response
-       (utils/paginate-list
-        (merge
-         {:item-list
-          (rank/losses-to-lower-rank
-           (merge
-            {:rikishi rikishi
+        (db/get-bout-list
+          (merge
+            {:loser rikishi
+             :rank-delta rank_delta
+             :is-playoff is_playoff
              :year year
              :month month
-             :day day}
-            ;; (when comparison {:comparison (or (get comparison-map comparison) <=)})
-            (when delta {:delta (Integer/parseInt delta)})))}
-         (when page {:page page})
-         (when per {:per per}))))))
+             :day day
+             :paginate true}
+            (when (= matchup "includes_larger")
+              {:comparison ">="})
+            (when (= matchup "larger_only")
+              {:comparison ">"})
+            (when (= matchup "includes_smaller")
+              {:comparison "<="})
+            (when (= matchup "smaller_only")
+              {:comparison "<"})
+            (when page {:page page})
+            (when per {:per per})))))
+    )
 
     ;; TODO--
     ;; Ben has techniques are grouped into 4 categories
@@ -438,15 +564,19 @@
   
   (context "/perform" []
     
+    ;; TODO -- reconsider what this grouping of routes is
+    ;;   and if it's needed at all
     ;; all bouts, wins, and losses by rank
     ;; (GET "/:rank")
     ;; (GET "/win/:rank")
     ;; (GET "/lose/:rank")
     
+    ;; techniques performed by ranks?
+    
     ;; all bouts, wins, and losses by rank and technique
     ;; (GET "/:rank/:technique" [technique year month day page per]
     ;;   (response
-    ;;    (mysql/get-bout-list
+    ;;    (db/get-bout-list
     ;;     (merge
     ;;      {:technique technique
     ;;       :year year

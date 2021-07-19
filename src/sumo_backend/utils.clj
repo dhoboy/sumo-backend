@@ -128,6 +128,20 @@
         keyword)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Zero pad number strings
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn zero-pad 
+  "given any passed in number as a string or number,
+   returns a zero-padded string for that number.
+   e.g. given 7 or '7' => '07'"
+  [input]
+  (let [val (if (string? input) (Integer/parseInt input) input)]
+    (if (< val 10)
+      (str 0 val)
+      (str val))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Add percent to list
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

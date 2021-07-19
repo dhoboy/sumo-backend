@@ -1,4 +1,4 @@
-(ns sumo-backend.technique)
+(ns sumo-backend.api.technique)
 (require '[sumo-backend.utils :as utils])
 
 ;; we will have to manually categorize

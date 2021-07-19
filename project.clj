@@ -11,11 +11,12 @@
                  [cheshire "5.10.0"]
                  [mysql/mysql-connector-java "5.1.6"]
                  [honeysql "1.0.444"]
+                 [clj-http "3.12.3"]
                  [ring/ring-defaults "0.3.2"]
                  [ring/ring-json "0.5.0"]
                  [jumblerg/ring-cors "2.0.0"]]
   :plugins [[lein-ring "0.12.5"]]
-  :ring {:handler sumo-backend.handler/app}
+  :ring {:handler sumo-backend.api.handler/app}
   :profiles
   {:dev {:dependencies [[javax.servlet/servlet-api "2.5"]
                         [ring/ring-mock "0.3.2"]]}})

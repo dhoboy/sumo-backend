@@ -1,5 +1,5 @@
-(ns sumo-backend.tournament)
-(require '[sumo-backend.mysql :as db])
+(ns sumo-backend.api.tournament)
+(require '[sumo-backend.service.mysql :as db])
 (require '[sumo-backend.utils :as utils])
 
 ;; Everything to do with Tournaments

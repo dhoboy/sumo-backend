@@ -1,8 +1,9 @@
 (ns sumo-backend.core)
 (require '[cheshire.core :refer :all]) ; parses json
-(require '[sumo-backend.mysql :as db])
-(require '[sumo-backend.rank :as rank])
+(require '[sumo-backend.service.mysql :as db])
+(require '[sumo-backend.api.rank :as rank])
 (require '[sumo-backend.utils :as utils])
+(require '[sumo-backend.service.data-format :as data-fmt])
 
 ;; TODO Make a main function
 ;; If you specify a main namespace like sumo-backend.core,
@@ -48,7 +49,35 @@
 ;; there is only one namespace to change.
 
 ; n.b.: day15__09_2019 has a takakeisho and mitakeumi playoff
-  
+
+;;;;;;;;;;;;;;;
+;; Get Data
+;;;;;;;;;;;;;;;
+
+(defn build-date
+  "command line date params are passed
+   as a list, build into map"
+  [& args]
+  (let [date-parts (into [] (first args))] ;; [year 2021 month 7 day 1]
+    {(keyword (get date-parts 0)) (get date-parts 1)
+     (keyword (get date-parts 2)) (get date-parts 3)
+     (keyword (get date-parts 4)) (get date-parts 5)}))
+
+(defn get-data 
+  "gets the bout data for passed in params"
+  [{:keys [year month day] :or {year nil month nil day nil} :as date}]
+  (cond 
+    (and year month day) (data-fmt/get-new-bout-data date)
+    (and year month (nil? day)) (dorun
+                                  (map 
+                                    #(data-fmt/get-new-bout-data 
+                                       {:year year :month month :day %})
+                                    (range 1 16)))
+    :else (println "Invalid date params!" 
+            (str "year: "   (or year "nil")
+              " month: " (or month "nil")
+              " day: "   (or day "nil")))))
+
 ;;;;;;;;;;;;;;
 ;; Load Data
 ;;;;;;;;;;;;;;
@@ -166,7 +195,7 @@
   (println 
     (str
       "\n** Welcome to the Grand Sumo API!\n"
-      "USAGE: lein run <command> <optional path or subject>\n\n"
+      "USAGE: lein run <command> <optional path or subject or date parts>\n\n"
       "Available commands are:\n"
       " -> explain <optional subject>\n"
       "      Provides a quick overview of subject.\n" 
@@ -175,7 +204,12 @@
       " -> initialize\n"
       "      Creates the mysql tables used by this project.\n"
       " -> tear-down\n"
-      "      Drops mysql tables created by this project.\n" 
+      "      Drops mysql tables created by this project.\n"
+      " -> get-data year ___ month ___ <optional day ___>\n"
+      "      Gets and writes data to files in 'default-data-dir'\n"
+      "      for all days in tournament specified by year and month.\n"
+      "      If passed year, month, and day, only gets and writes\n"
+      "      data for that specific day in that tournament.\n"
       " -> load-data <optional path>\n"
       "      Loads all previously un-loaded data\n" 
       "      from the optionally passed file or directory path.\n"
@@ -190,5 +224,6 @@
     "explain"          (print-explain (first (drop 1 args)))
     "initialize"       (db/create-tables)
     "tear-down"        (db/drop-tables)
+    "get-data"         (get-data (build-date (rest args)))
     "load-data"        (load-data (first (drop 1 args)))
     (print-help)))

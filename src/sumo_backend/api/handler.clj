@@ -1,4 +1,4 @@
-(ns sumo-backend.handler)
+(ns sumo-backend.api.handler)
 (require '[compojure.core :refer :all])
 (require '[compojure.route :as route])
 (require '[ring.middleware.json :refer [wrap-json-response]])
@@ -6,10 +6,10 @@
 (require '[ring.util.response :refer [response]])
 (require '[jumblerg.middleware.cors :refer [wrap-cors]])
 (require '[sumo-backend.utils :as utils])
-(require '[sumo-backend.mysql :as db])
-(require '[sumo-backend.rank :as rank])
-(require '[sumo-backend.technique :as technique])
-(require '[sumo-backend.tournament :as tournament])
+(require '[sumo-backend.service.mysql :as db])
+(require '[sumo-backend.api.rank :as rank])
+(require '[sumo-backend.api.technique :as technique])
+(require '[sumo-backend.api.tournament :as tournament])
 
 ;; TODO--
 ;; plan out ui in terms of 

@@ -1,4 +1,4 @@
-(ns sumo-backend.mysql-schema)
+(ns sumo-backend.service.mysql-schema)
 (require '[clojure.java.jdbc :as jdbc])
 
 ;; Mysql table definitions for tables used in this project

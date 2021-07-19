@@ -1,4 +1,4 @@
-(ns sumo-backend.compare)
+(ns sumo-backend.api.compare)
 
 ;; Comparison functions returning lists of bouts
 ;; running on top of (mysql/get-bout-list...) queries

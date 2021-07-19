@@ -24,6 +24,11 @@
     "jp" : "Tsukidashi",
     "cat" : "push"
   },
+  "kirikaeshi" : {
+    "en" : "Twisting backward knee trip",
+    "jp" : "Kirikaeshi",
+    "cat" : null
+  },
   "rear throw down" : {
     "en" : "Rear throw down",
     "jp" : null,
@@ -96,7 +101,7 @@
   },
   "arm barring force down" : {
     "en" : "Arm barring force down",
-    "jp" : null,
+    "jp" : "Kimetaoshi",
     "cat" : null
   },
   "katasukashi" : {
@@ -193,6 +198,11 @@
     "en" : "Frontal thrust out",
     "jp" : "Tsukidashi",
     "cat" : "push"
+  },
+  "backward belt throw" : {
+    "en" : "Backward belt throw",
+    "jp" : "Harimanage",
+    "cat" : null
   },
   "no-technique_ja" : {
     "en" : "Frontal force out",
@@ -411,7 +421,7 @@
   },
   "twisting backward knee trip" : {
     "en" : "Twisting backward knee trip",
-    "jp" : null,
+    "jp" : "Kirikaeshi",
     "cat" : null
   },
   "inside leg trip" : {
@@ -468,6 +478,16 @@
     "en" : "Default",
     "jp" : "Fusen",
     "cat" : "default"
+  },
+  "harimanage" : {
+    "en" : "Backward belt throw",
+    "jp" : "Harimanage",
+    "cat" : null
+  },
+  "kimetaoshi" : {
+    "en" : "Arm barring force down",
+    "jp" : "Kimetaoshi",
+    "cat" : null
   },
   "sotokomata" : {
     "en" : "Over thigh scooping body drop",

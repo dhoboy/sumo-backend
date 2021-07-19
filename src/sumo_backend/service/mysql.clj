@@ -1,10 +1,10 @@
-(ns sumo-backend.mysql)
+(ns sumo-backend.service.mysql)
 (require '[clojure.java.jdbc :as jdbc])
 (require '[honeysql.core :as sql]
          '[honeysql.helpers :refer :all :as helpers])
 (require '[cheshire.core :refer :all]) ; parses json
 (require '[jdbc.pool.c3p0 :as pool]) ; TODO - will add this later
-(require '[sumo-backend.mysql-schema :as schema])
+(require '[sumo-backend.service.mysql-schema :as schema])
 (require '[sumo-backend.utils :as utils])
 
 ;; Namespace that connects to MySql

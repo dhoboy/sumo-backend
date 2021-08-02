@@ -12,6 +12,7 @@
                  [mysql/mysql-connector-java "5.1.6"]
                  [honeysql "1.0.444"]
                  [clj-http "3.12.3"]
+                 [simple-time "0.2.0"]
                  [ring/ring-defaults "0.3.2"]
                  [ring/ring-json "0.5.0"]
                  [jumblerg/ring-cors "2.0.0"]]

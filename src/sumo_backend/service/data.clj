@@ -1,17 +1,18 @@
-(ns sumo-backend.service.data-format)
+(ns sumo-backend.service.data)
 (require '[sumo-backend.utils :as utils])
 (require '[clojure.string :as str])
+(require '[simple-time.core :as date])
 (require '[clj-http.client :as http-client])
 (require '[cheshire.core :refer :all]) ; parses json
 (require '[sumo-backend.api.technique :as technique])
-(require '[clojure.core.async :as async :refer [>! <! >!! <!! go chan buffer
+(require '[clojure.core.async :as async :refer [>! <! >!! <!! go go-loop chan buffer
                                                 sliding-buffer close! thread
                                                 alt! alt!! alts! alts!! timeout]])
 
-; This namespace formats basho data as needed for use in this project
+; This namespace fetches and formats basho data as needed for use in this project
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; * Updating technique info on data *
+;; * Updating technique info on basho data *
 ;;   - atom for all techniques the system has so far,
 ;;     it gets updated when new data is loaded.
 ;;     e.g. of this atom with data:
@@ -41,6 +42,7 @@
 ;; TODO -- technique_ja is deprecated, move to using
 ;; technique, technique_en, technique_category
 ;; the japanese technique will be just called "technique"
+;; Update all existing files with this as well! 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Managing the technique-info atom
@@ -171,208 +173,184 @@
         (map add-technique-to-basho-file all-files))
       (println (str "File: '" (or (first args) utils/default-data-dir) "' not found")))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Clojure.core/async Pipeline for fetching new data
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Core/Async Pipeline for Fetching, formating, and writing new data
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; download single day's match data
+;; all these channels live outside of the jobs that use them.
+;; each job parking takes from the channel it reads from,
+;; does it's work, and puts its finished work on the next channel
+;; in the sequence.
+
+;; these independent channels holding the work that 
+;; got put there from jobs is the "pipeline of jobs".
+
+;; each one of these independent processes, like fetch-data is a "job".
+
+;;;;;;;;;;;;;
+;; Channels 
+;;;;;;;;;;;;;
+
+(def fetch-chan (chan))  ;; holds {:year 2021 :month 7 :day 1} maps to fetch data for
+(def update-chan (chan)) ;; holds parsed response documents to update
+(def write-chan (chan))  ;; holds updated documents to write to file
+
+;;;;;;;;;;
+;; Fetch
+;;;;;;;;;;
+
+(def fetch-error-log "./metadata/fetch-errors.log")
+
+; @bslawski, would it be helpful to see these errors println'd out also, or just silently written to file?
+; helper
+(defn log-error 
+  "convenience wrapper for spitting to fetch error log"
+  [message]
+  (spit
+    fetch-error-log
+    (str
+      (date/format (date/now) :date-time) " - "
+      message
+      "\n")
+    :append true))
+
+; helper 
+(defn build-fetch-url
+  "takes { :year :month :day } map and builds fetch call"
+  [{:keys [year month day]}]
+  (str
+    "https://www3.nhk.or.jp/nhkworld/en/tv/sumo/tournament/"
+    year
+    (utils/zero-pad month)
+    "/day"
+    day
+    ".json"))
+
+; helper 
+(defn handle-fetch-response
+  "puts parsed success responses on update-chan
+   and logs out returned errors"
+  [resp date url]
+  (if (= (:status resp) 200)  
+    (go
+      (>!
+        update-chan
+        (with-meta (parse-string (:body resp) true) date)))
+    (log-error (str "Data fetch for " date " at url " url " errored with response " resp))))
+
+; job
 (defn fetch-data
-  "fetches data for a given tournament day
-   returns the response on a channel."
-  [{:keys [year month day] :or {year 2021 month 7 day 1}}]
-  (let [out  (chan)
-        call (chan)]
-    ;; put http call onto call channel
-    (go
-      (>!
-       call
-       (http-client/get
-         (str
-           "https://www3.nhk.or.jp/nhkworld/en/tv/sumo/tournament/"
-           year
-           (utils/zero-pad month)
-           "/day"
-           day
-           ".json"))))
-    ;; put alt of the 5 sec timeout and call on out channel
-    (go
-      (>!
-       out
-       (alt! 
-         (timeout 5000) "timed out"
-         call ([resp] resp))))
-    out))
-
-(defn fetch-data-no-alt
-  "fetches data for a given tournament day
-   returns the response on a channel."
-  [{:keys [year month day] :or {year 2021 month 7 day 1}}]
-  (let [out (chan)]
-    (go
-      (>!
-       out
-       (http-client/get
-         (str
-           "https://www3.nhk.or.jp/nhkworld/en/tv/sumo/tournament/"
-           year
-           (utils/zero-pad month)
-           "/day"
-           day
-           ".json"))))
-    out))
-
-;; parse single day's response body into clojure data structures
-(defn parse-response
-  "parses fetched data response passed in on in channel
-   puts it on out channel"
-  [in]
-  (let [out (chan)
-        resp (<!! in)] ; let [resp (go (<! in))] errors with "can't put nil on channel" @blawski?
-    (go ;(while true ; i think these while true's cause infinite loops to spin out of control?
-      (>!
-       out
-       (cond 
-         (= (:status resp) 200) (parse-string (:body resp) true)
-         (= resp "timed out") (println "handle this timeout")
-         :else (println "handle this error case: " resp))));)
-    out))
-    
-
-(defn handle-failure-response
-  "handle when fetch fails and log out to a file"
+  "takes from fetch-chan, fetches data for a given tournament day, 
+   handles timeouts, and puts non-timed out calls on update-chan"
   []
-  (println "coming soon"))
+  (go-loop [date (<! fetch-chan)] ; parking take is initial binding
+    ;; build the call, put on call chan, alt! with a timeout, handle response
+    (let [call (chan)
+          url (build-fetch-url date)]
+      (go 
+        (>! 
+          call 
+          (try 
+            (http-client/get url)
+            (catch Exception e (str "Exception: " (.getMessage e))))))
+      (alt!
+        (timeout 5000) (log-error (str "Data fetch for " date " at url " url " timed out in 5000ms"))
+        call ([resp] (handle-fetch-response resp date url))))
+    (recur (<! fetch-chan)))) ; re-bind with a parking take of the next date
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Update response with technique info and rename keys
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;
+;; Update 
+;;;;;;;;;;;;
 
+; helper
 (defn rename-technique-keys
-  "renames rename 'technique' to 'technique_en' and 
-   'technique_ja' to 'technique' on data passed in on channel"
-  [in]
-  (let [out (chan)]
-    (go ;(while true
-      (>!
-        out
-        {:data
-         (map
-           (fn [{:keys [technique technique_ja] :as bout}]
-             (assoc
-               (dissoc bout :technique :technique_ja)
-               :technique technique_ja
-               :technique_en technique))
-           (:data (<! in)))}));)
-    out))
+  "given the data array from a day's match data,
+   renames 'technique' to 'technique_en'
+   and 'technique_ja' to 'technique'"
+  [data]
+  (map
+    (fn [{:keys [technique technique_ja] :as bout}]
+      (assoc
+        (dissoc bout :technique :technique_ja)
+        :technique technique_ja
+        :technique_en technique))
+    data))
 
-; i dont think this is needed, can just use technique-info atom
-(defn technique-info-channel
-  "initializes from technique-info file, if passed an 
-   in channel, updates technique-info with the data
-   on that channel. uses technique-info atom under the hood"
-  [{:keys [in] :or {in (timeout 100)}}]
-  (let [out (chan)]
-    (go (while true
-      (>!
-        out
-        (alt!
-          in ([info-to-add] (update-technique-info info-to-add))
-          :default (if (empty? @technique-info)
-                     (initialize-technique-info)
-                     @technique-info)))))
-    out))
+; helper
+(defn update-technique-add-category 
+  "given a data array with renamed technique keys from 
+   rename-technique-keys, completes technique
+   update and adds category to each item in data"
+  [data]
+  (map
+    (fn [{:keys [technique technique_en] :as bout}]
+      (apply
+        assoc
+        bout
+        (concat
+          (when (and (nil? technique) technique_en)
+            [:technique (:jp (get @technique-info (str/lower-case technique_en)))])
+          (when (and (nil? technique_en) technique)
+            [:technique_en (:en (get @technique-info (str/lower-case technique)))])
+          (when (or technique technique_en)
+            [:technique_category (:cat (get @technique-info
+                                         (or (str/lower-case technique)
+                                           (str/lower-case technique_en))))]))))
+    data))
 
-;; also make this update technique-info shared file
-;; this output channel contains things to merge into 
-;; technique-info-channel
-(defn technique-update
-  "updates any missing technique info to technique-info atom
-   and adds technique-category to each bout in data"
-  [in]
-  (let [out (chan (sliding-buffer 1))
-        info (if (empty? @technique-info)
-               (initialize-technique-info)
-               @technique-info)]
-    (go ;(while true
+; job
+(defn update-data
+  "pulls from update-chan and updates the data,
+   updates the shared technique-info atom, and
+   puts updated data document onto write-chan"
+  []
+  (go-loop [document (<! update-chan)]
+    (let [data-renamed-keys (rename-technique-keys (:data document))]
+      (update-technique-info data-renamed-keys)
       (>!
-        out
-        {:data
-         (map
-          (fn [{:keys [technique technique_en] :as bout}]
-            (apply
-              assoc
-              bout
-              (concat
-                (when (and (nil? technique) technique_en)
-                  [:technique (:jp (get info (str/lower-case technique_en)))])
-                (when (and (nil? technique_en) technique)
-                  [:technique_en (:en (get info (str/lower-case technique)))])
-                (when (or technique technique_en)
-                  [:technique_category (:cat (get info
-                                                (or (str/lower-case technique)
-                                                  (str/lower-case technique_en))))]))))
-          (:data (<! in)))}));)
-    out))
-  
-(defn update-technique-info-from-channels
-  "takes updated data from in and writes it to technique-info atom
-   and puts it back on the out channel"
-  [in]
-  (let [out (chan)
-        data (<!! in)]
-    ;(go (println (<! in))) ; this println works
-    ;(go (update-technique-info (<! in))) 
-    ;(go (>! out (<! in))) ; this hangs forever, b/c i already took from the channel?
-    (update-technique-info data)
-    (go (>! out data))
-    out))
+        write-chan
+        (assoc
+          document
+          :data (update-technique-add-category data-renamed-keys))))
+    (recur (<! update-chan))))
 
-(defn get-new-bout-data-filename 
+;;;;;;;;;;;;
+;; Write
+;;;;;;;;;;;;
+
+; helper
+(defn get-new-bout-data-filename
   "for the passed in :year, :month, and :day
    generate the filename where this data will be written"
   [{:keys [year month day]}]
   (str "day" day "__" (utils/zero-pad month) "_" year ".json"))
-  
-(defn get-new-bout-data
-  "starts processes for getting new bout data 
-   and saving it to a file"
-  [{:keys [year month day] :as date}]
-  (let [filedir (str utils/default-data-dir "/" year "/" (utils/zero-pad month) "/")
-        filename (get-new-bout-data-filename date)
-        data (-> date
-                 fetch-data
-                 parse-response
-                 rename-technique-keys
-                 technique-update
-                 update-technique-info-from-channels
-                 <!!)]
-    (when (not (.exists (clojure.java.io/file filedir)))
-      (.mkdir (clojure.java.io/file filedir)))
-    (spit 
-      (str filedir filename)
-      (generate-string data {:pretty true}))
-    (println "File" (str filedir filename) "written!")))
 
+; job
+(defn write-data
+  "pulls from write-chan, writes the document to file"
+  []
+  (go-loop [document (<! write-chan)] 
+    (let [{:keys [year month day] :as date} (meta document)
+          filedir (str utils/default-data-dir "/" year "/" (utils/zero-pad month) "/")
+          filename (get-new-bout-data-filename date)]
+      (when (not (.exists (clojure.java.io/file filedir)))
+        (.mkdir (clojure.java.io/file filedir)))
+      (spit
+        (str filedir filename)
+        (generate-string document {:pretty true}))
+      (println "File" (str filedir filename) "written!"))
+    (recur (<! write-chan))))
 
-;; this just started running like an infinite loop when they had while true's in them--
-;; set up pipeline of all these channels
-;; (def date-chan (chan))
-;; (def fetch-out (fetch-data date-chan))
-;; (def parse-out (parse-response fetch-out))
-;; (def rename-technique-keys-out (rename-technique-keys parse-out))
-;; (def technique-update-out (technique-update rename-technique-keys-out))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Start Fetch->Update->Write Pipeline
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; (defn printer
-;;   [in]
-;;   (go (while true (println (<! in)))))
-
-;; (printer technique-update-out)
-
-;; this also started running as an infinite loop until i took those while true's out
-;; i also need to derive the filename from the dates
-;; (-> {:year 2021 :month 7 :day 1}
-;;     fetch-data
-;;     parse-response
-;;     rename-technique-keys
-;;     technique-update
-;;     <!!)
+(defn start-data-pipeline
+  "Start the data fetch->update->write pipeline.
+   Blocking put {:year :month :day} maps on the 
+   fetch-chan to begin the process"
+  []
+  (when (empty? @technique-info) (initialize-technique-info))
+  (fetch-data)
+  (update-data)
+  (write-data))

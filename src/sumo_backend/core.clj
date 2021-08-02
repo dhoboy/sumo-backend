@@ -3,14 +3,8 @@
 (require '[sumo-backend.service.mysql :as db])
 (require '[sumo-backend.api.rank :as rank])
 (require '[sumo-backend.utils :as utils])
-(require '[sumo-backend.service.data-format :as data-fmt])
-
-;; TODO Make a main function
-;; If you specify a main namespace like sumo-backend.core,
-;; lein will import its dependencies when you start the repl.
-;; E.g.:
-;; core ns: https://github.com/bslawski/clj-ml/blob/master/src/clj_ml/core.clj
-;; project.clj: https://github.com/bslawski/clj-ml/blob/master/project.clj
+(require '[sumo-backend.service.data :as data])
+(require '[clojure.core.async :as async :refer [>!! thread]])
 
 ;; TODO use a single namespace for DB functions
 ;; Any DB config or interface should be in a single
@@ -66,12 +60,13 @@
 (defn get-data 
   "gets the bout data for passed in params"
   [{:keys [year month day] :or {year nil month nil day nil} :as date}]
+  (data/start-data-pipeline) 
   (cond 
-    (and year month day) (data-fmt/get-new-bout-data date)
+    (and year month day) (>!! data/fetch-chan date)
     (and year month (nil? day)) (dorun
                                   (map 
-                                    #(data-fmt/get-new-bout-data 
-                                       {:year year :month month :day %})
+                                    #(>!! data/fetch-chan 
+                                          {:year year :month month :day %})
                                     (range 1 16)))
     :else (println "Invalid date params!" 
             (str "year: "   (or year "nil")
@@ -195,7 +190,7 @@
   (println 
     (str
       "\n** Welcome to the Grand Sumo API!\n"
-      "USAGE: lein run <command> <optional path or subject or date parts>\n\n"
+      "USAGE: lein run <command> <optional path|subject|date-parts>\n\n"
       "Available commands are:\n"
       " -> explain <optional subject>\n"
       "      Provides a quick overview of subject.\n" 

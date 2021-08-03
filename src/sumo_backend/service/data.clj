@@ -1,13 +1,11 @@
 (ns sumo-backend.service.data)
 (require '[sumo-backend.utils :as utils])
 (require '[clojure.string :as str])
-(require '[simple-time.core :as date])
+(require '[simple-time.core :as time])
 (require '[clj-http.client :as http-client])
 (require '[cheshire.core :refer :all]) ; parses json
 (require '[sumo-backend.api.technique :as technique])
-(require '[clojure.core.async :as async :refer [>! <! >!! <!! go go-loop chan buffer
-                                                sliding-buffer close! thread
-                                                alt! alt!! alts! alts!! timeout]])
+(require '[clojure.core.async :as async :refer [>! >!! <! <!! go go-loop chan alt! timeout]])
 
 ; This namespace fetches and formats basho data as needed for use in this project
 
@@ -31,18 +29,13 @@
 ;;        ...}
 ;;   - when updating existing files,
 ;;     before loading them into the database,
-;;     you can load a repl and pass data filepaths to
-;;     the add-techniques-to-datafiles fn below
+;;     you can load a repl and pass update functions
+;;     and data filepaths to update-basho-dir
 ;;     to update all files with: technique, technique_en, 
 ;;     and technique_category.
-;;   - there is also a pipeline of jobs that will process all newly
-;;     fetched data and update it before saving to a file.
+;;   - there is also a pipeline of jobs that will fetch and process
+;;     new data and update it before saving to a file.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; TODO -- technique_ja is deprecated, move to using
-;; technique, technique_en, technique_category
-;; the japanese technique will be just called "technique"
-;; Update all existing files with this as well! 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Managing the technique-info atom
@@ -87,7 +80,7 @@
             k))))))
 
 (defn update-technique-info
-  "derive all technique info from passed in bout data
+  "derive all technique info from passed in bout data array
    and update atom with any new technique info found
    also saves to the technique-info.json file in metadata/"
   [data]
@@ -116,62 +109,103 @@
                    :jp technique
                    :cat (technique/get-category technique)}))
               {}
-              (:data data)))))
+              data))))
             {:pretty true})))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Re-naming and classifying techniques in bouts
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn rename-bout-technique-keys
+  "given a bout, re-names:
+   'technique' -> 'technique_en', and
+   'technique_ja' -> 'technique'. 
+   if bout technique keys have already been renamed, 
+   just returns them as is"
+  [{:keys [technique technique_ja technique_en] :as bout}]
+  (if (and (nil? technique_en) (some? technique_ja))
+    (assoc
+      (dissoc bout :technique :technique_ja)
+      :technique technique_ja
+      :technique_en technique)
+    bout))
+
+(defn complete-bout-technique-info
+  "given a bout, adds technique, technique_en, 
+   and technique_category from technique-info atom
+   if bout is missing any of them, otherwise returns the bout as is.
+   Assumes technique and technique_en keys. Run rename-bout-technique-keys 
+   before running this to update the keys."
+   [{:keys [technique technique_en technique_category] :as bout}]
+   (if (or (nil? technique)
+           (nil? technique_en)
+           (nil? technique_category))
+     (apply ; bout technique info is incomplete, complete it
+       assoc
+       bout
+       (concat
+         (when (and (nil? technique) technique_en)
+           [:technique (:jp (get @technique-info (str/lower-case technique_en)))])
+         (when (and (nil? technique_en) technique)
+           [:technique_en (:en (get @technique-info (str/lower-case technique)))])
+         (when (and (nil? technique_category) (or technique technique_en))
+           [:technique_category (:cat (get @technique-info
+                                        (or (str/lower-case technique)
+                                            (str/lower-case technique_en))))])))
+     bout)) ; bout technique info is complete, just return bout
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; REPL functions for updating existing files
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+; available :func for update-basho-dir
+(defn update-technique-keys-in-basho-file
+  "takes a filepath and renames 
+   'technique' -> 'technique_en' and
+   'technique_ja' -> 'technique'
+   for all bouts in the file"
+  [filepath]
+  (let [document (parse-string (slurp filepath) true)]
+    (spit ; write the updated data back to the datafile
+      filepath
+      (generate-string
+        {:data (map rename-bout-technique-keys (:data document))}
+        {:pretty true}))))
+
+; available :func for update-basho-dir
+; don't forget to run initialize-technique-info before running this
 (defn add-technique-to-basho-file
   "not all files have technique_en and no files
    start with technique_category, backfills the
    file at the passed in filepath with more technique info"
   [filepath]
-  (let [data (parse-string (slurp filepath) true)]
-    (update-technique-info data)
+  (let [document (parse-string (slurp filepath) true)]
+    (update-technique-info (:data document))
     (spit ; write the technique info back to the datafile
       filepath
       (generate-string 
-        {:data 
-         (map
-           (fn [{:keys [technique technique_en technique_category] :as bout}]
-             (if (or (nil? technique)
-                     (nil? technique_en)
-                     (nil? technique_category)) ; technique data incomplete
-               (apply 
-                assoc
-                bout
-                (concat
-                  (when (and (nil? technique) technique_en)
-                    [:technique (:jp (get @technique-info (str/lower-case technique_en)))])
-                  (when (and (nil? technique_en) technique)
-                    [:technique_en (:en (get @technique-info (str/lower-case technique)))])
-                  (when (and (nil? technique_category) (or technique technique_en))
-                    [:technique_category (:cat (get @technique-info
-                                                 (or (str/lower-case technique) 
-                                                     (str/lower-case technique_en))))])))
-               bout))
-           (:data data))}
+        {:data (map complete-bout-technique-info (:data document))}
         {:pretty true}))))
 
-(defn add-technique-to-basho-dir
-  "runs add-technique-to-basho-file over all files in passed in dir
+(defn update-basho-dir
+  "runs passed in func over all files in passed in dir,
    defaults to default-data-dir"
-  [& args]
-  (let [custom-path  (utils/path->obj (first args))
-        default-path (utils/path->obj utils/default-data-dir)
-        all-files    (->> (or custom-path default-path)
-                          (filter #(.isFile %))
-                          (map str)
-                          (filter 
-                            #(some? 
-                              (re-find #".json$" %))))
-        file-count   (count all-files)]
-    (if (> file-count 0)
-      (dorun
-        (map add-technique-to-basho-file all-files))
-      (println (str "File: '" (or (first args) utils/default-data-dir) "' not found")))))
+  [{:keys [func dir]}]
+  (if (nil? func)
+    (println "Must pass a function :func to update-basho-dir")
+    (let [custom-path  (utils/path->obj dir)
+          default-path (utils/path->obj utils/default-data-dir)
+          all-files    (->> (or custom-path default-path)
+                            (filter #(.isFile %))
+                            (map str)
+                            (filter 
+                              #(some? 
+                                 (re-find #".json$" %))))
+          file-count   (count all-files)]
+      (if (> file-count 0)
+        (dorun
+          (map func all-files))
+        (println (str "File: '" (or dir utils/default-data-dir) "' not found"))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Core/Async Pipeline for Fetching, formating, and writing new data
@@ -201,22 +235,23 @@
 
 (def fetch-error-log "./metadata/fetch-errors.log")
 
-; @bslawski, would it be helpful to see these errors println'd out also, or just silently written to file?
 ; helper
-(defn log-error 
+(defn log-error
   "convenience wrapper for spitting to fetch error log"
   [message]
-  (spit
-    fetch-error-log
-    (str
-      (date/format (date/now) :date-time) " - "
-      message
-      "\n")
-    :append true))
+    (println message)
+    (spit
+      fetch-error-log
+      (str 
+        (time/format (time/now) :date-time) 
+        " - " 
+        message 
+        "\n")
+      :append true))
 
 ; helper 
 (defn build-fetch-url
-  "takes { :year :month :day } map and builds fetch call"
+  "takes { :year :month :day } map and builds fetch url"
   [{:keys [year month day]}]
   (str
     "https://www3.nhk.or.jp/nhkworld/en/tv/sumo/tournament/"
@@ -262,42 +297,6 @@
 ;; Update 
 ;;;;;;;;;;;;
 
-; helper
-(defn rename-technique-keys
-  "given the data array from a day's match data,
-   renames 'technique' to 'technique_en'
-   and 'technique_ja' to 'technique'"
-  [data]
-  (map
-    (fn [{:keys [technique technique_ja] :as bout}]
-      (assoc
-        (dissoc bout :technique :technique_ja)
-        :technique technique_ja
-        :technique_en technique))
-    data))
-
-; helper
-(defn update-technique-add-category 
-  "given a data array with renamed technique keys from 
-   rename-technique-keys, completes technique
-   update and adds category to each item in data"
-  [data]
-  (map
-    (fn [{:keys [technique technique_en] :as bout}]
-      (apply
-        assoc
-        bout
-        (concat
-          (when (and (nil? technique) technique_en)
-            [:technique (:jp (get @technique-info (str/lower-case technique_en)))])
-          (when (and (nil? technique_en) technique)
-            [:technique_en (:en (get @technique-info (str/lower-case technique)))])
-          (when (or technique technique_en)
-            [:technique_category (:cat (get @technique-info
-                                         (or (str/lower-case technique)
-                                           (str/lower-case technique_en))))]))))
-    data))
-
 ; job
 (defn update-data
   "pulls from update-chan and updates the data,
@@ -305,13 +304,13 @@
    puts updated data document onto write-chan"
   []
   (go-loop [document (<! update-chan)]
-    (let [data-renamed-keys (rename-technique-keys (:data document))]
-      (update-technique-info data-renamed-keys)
+    (let [data-with-renamed-keys (map rename-bout-technique-keys (:data document))]
+      (update-technique-info data-with-renamed-keys)
       (>!
         write-chan
         (assoc
           document
-          :data (update-technique-add-category data-renamed-keys))))
+          :data (map complete-bout-technique-info data-with-renamed-keys))))
     (recur (<! update-chan))))
 
 ;;;;;;;;;;;;

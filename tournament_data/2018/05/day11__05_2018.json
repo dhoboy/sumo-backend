@@ -8,7 +8,6 @@
       "result" : "win",
       "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/2/images/kakuryu_ja.png"
     },
-    "technique" : "Slap down",
     "west" : {
       "name" : "MITAKEUMI",
       "perform" : "7-4",
@@ -17,8 +16,9 @@
       "result" : "lose",
       "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/10/images/mitakeumi_ja.png"
     },
-    "technique_ja" : "Hatakikomi",
-    "technique_category" : "dodge"
+    "technique_category" : "dodge",
+    "technique" : "Hatakikomi",
+    "technique_en" : "Slap down"
   }, {
     "east" : {
       "name" : "SHODAI",
@@ -28,7 +28,6 @@
       "result" : "lose",
       "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/11/images/shodai_ja.png"
     },
-    "technique" : "Frontal force out",
     "west" : {
       "name" : "HAKUHO",
       "perform" : "10-1",
@@ -37,8 +36,9 @@
       "result" : "win",
       "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/4/images/hakuho_ja.png"
     },
-    "technique_ja" : "Yorikiri",
-    "technique_category" : "force"
+    "technique_category" : "force",
+    "technique" : "Yorikiri",
+    "technique_en" : "Frontal force out"
   }, {
     "east" : {
       "name" : "TOCHINOSHIN",
@@ -48,7 +48,6 @@
       "result" : "win",
       "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/30/images/tochinoshin_ja.png"
     },
-    "technique" : "Over arm throw",
     "west" : {
       "name" : "KOTOSHOGIKU",
       "perform" : "6-5",
@@ -57,8 +56,9 @@
       "result" : "lose",
       "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/9/images/kotoshogiku_ja.png"
     },
-    "technique_ja" : "Uwatenage",
-    "technique_category" : null
+    "technique_category" : null,
+    "technique" : "Uwatenage",
+    "technique_en" : "Over arm throw"
   }, {
     "east" : {
       "name" : "CHIYOTAIRYU",
@@ -68,7 +68,6 @@
       "result" : "lose",
       "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/390/images/chiyotairyu_ja.png"
     },
-    "technique" : "Rear push out",
     "west" : {
       "name" : "ICHINOJO",
       "perform" : "7-4",
@@ -77,8 +76,9 @@
       "result" : "win",
       "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/24/images/ichinojo_ja.png"
     },
-    "technique_ja" : "Okuridashi",
-    "technique_category" : "push"
+    "technique_category" : "push",
+    "technique" : "Okuridashi",
+    "technique_en" : "Rear push out"
   }, {
     "east" : {
       "name" : "TAMAWASHI",
@@ -88,7 +88,6 @@
       "result" : "win",
       "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/7/images/tamawashi_ja.png"
     },
-    "technique" : "Frontal thrust out",
     "west" : {
       "name" : "ENDO",
       "perform" : "3-6-2",
@@ -97,8 +96,9 @@
       "result" : "lose",
       "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/20/images/endo_ja.png"
     },
-    "technique_ja" : "Tsukidashi",
-    "technique_category" : "push"
+    "technique_category" : "push",
+    "technique" : "Tsukidashi",
+    "technique_en" : "Frontal thrust out"
   }, {
     "east" : {
       "name" : "DAIEISHO",
@@ -108,7 +108,6 @@
       "result" : "lose",
       "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/32/images/daieisho_ja.png"
     },
-    "technique" : "Frontal force out",
     "west" : {
       "name" : "KAISEI",
       "perform" : "3-8",
@@ -117,8 +116,9 @@
       "result" : "win",
       "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/44/images/kaisei_ja.png"
     },
-    "technique_ja" : "Yorikiri",
-    "technique_category" : "force"
+    "technique_category" : "force",
+    "technique" : "Yorikiri",
+    "technique_en" : "Frontal force out"
   }, {
     "east" : {
       "name" : "SHOHOZAN",
@@ -128,7 +128,6 @@
       "result" : "win",
       "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/16/images/shohozan_ja.png"
     },
-    "technique" : "Frontal thrust out",
     "west" : {
       "name" : "ABI",
       "perform" : "5-6",
@@ -137,8 +136,9 @@
       "result" : "lose",
       "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/54/images/abi_ja.png"
     },
-    "technique_ja" : "Tsukidashi",
-    "technique_category" : "push"
+    "technique_category" : "push",
+    "technique" : "Tsukidashi",
+    "technique_en" : "Frontal thrust out"
   }, {
     "east" : {
       "name" : "RYUDEN",
@@ -148,7 +148,6 @@
       "result" : "lose",
       "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/55/images/ryuden_ja.png"
     },
-    "technique" : "Frontal crush out",
     "west" : {
       "name" : "YUTAKAYAMA",
       "perform" : "2-9",
@@ -157,8 +156,9 @@
       "result" : "win",
       "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/53/images/yutakayama_ja.png"
     },
-    "technique_ja" : "Yoritaoshi",
-    "technique_category" : "force"
+    "technique_category" : "force",
+    "technique" : "Yoritaoshi",
+    "technique_en" : "Frontal crush out"
   }, {
     "east" : {
       "name" : "DAISHOMARU",
@@ -168,7 +168,6 @@
       "result" : "lose",
       "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/37/images/daishomaru_ja.png"
     },
-    "technique" : "Frontal push out",
     "west" : {
       "name" : "IKIOI",
       "perform" : "8-3",
@@ -177,8 +176,9 @@
       "result" : "win",
       "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/13/images/ikioi_ja.png"
     },
-    "technique_ja" : "Oshidashi",
-    "technique_category" : "push"
+    "technique_category" : "push",
+    "technique" : "Oshidashi",
+    "technique_en" : "Frontal push out"
   }, {
     "east" : {
       "name" : "CHIYOSHOMA",
@@ -188,7 +188,6 @@
       "result" : "win",
       "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/25/images/chiyoshoma_ja.png"
     },
-    "technique" : "Underarm throw",
     "west" : {
       "name" : "OKINOUMI",
       "perform" : "5-6",
@@ -197,8 +196,9 @@
       "result" : "lose",
       "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/27/images/okinoumi_ja.png"
     },
-    "technique_ja" : "Shitatenage",
-    "technique_category" : "throw"
+    "technique_category" : "throw",
+    "technique" : "Shitatenage",
+    "technique_en" : "Underarm throw"
   }, {
     "east" : {
       "name" : "TAKAKEISHO",
@@ -208,7 +208,6 @@
       "result" : "win",
       "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/36/images/takakeisho_ja.png"
     },
-    "technique" : "Thrust down",
     "west" : {
       "name" : "TAKARAFUJI",
       "perform" : "6-5",
@@ -217,8 +216,9 @@
       "result" : "lose",
       "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/17/images/takarafuji_ja.png"
     },
-    "technique_ja" : "Tsukiotoshi",
-    "technique_category" : "push"
+    "technique_category" : "push",
+    "technique" : "Tsukiotoshi",
+    "technique_en" : "Thrust down"
   }, {
     "east" : {
       "name" : "ASANOYAMA",
@@ -228,7 +228,6 @@
       "result" : "lose",
       "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/46/images/asanoyama_ja.png"
     },
-    "technique" : "Frontal push out",
     "west" : {
       "name" : "CHIYOMARU",
       "perform" : "5-6",
@@ -237,8 +236,9 @@
       "result" : "win",
       "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/42/images/chiyomaru_ja.png"
     },
-    "technique_ja" : "Oshidashi",
-    "technique_category" : "push"
+    "technique_category" : "push",
+    "technique" : "Oshidashi",
+    "technique_en" : "Frontal push out"
   }, {
     "east" : {
       "name" : "YOSHIKAZE",
@@ -248,7 +248,6 @@
       "result" : "lose",
       "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/18/images/yoshikaze_ja.png"
     },
-    "technique" : "Frontal thrust out",
     "west" : {
       "name" : "TOCHIOZAN",
       "perform" : "6-5",
@@ -257,8 +256,9 @@
       "result" : "win",
       "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/31/images/tochiozan_ja.png"
     },
-    "technique_ja" : "Tsukidashi",
-    "technique_category" : "push"
+    "technique_category" : "push",
+    "technique" : "Tsukidashi",
+    "technique_en" : "Frontal thrust out"
   }, {
     "east" : {
       "name" : "SADANOUMI",
@@ -268,7 +268,6 @@
       "result" : "win",
       "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/59/images/sadanoumi_ja.png"
     },
-    "technique" : "Over arm throw",
     "west" : {
       "name" : "KAGAYAKI",
       "perform" : "6-5",
@@ -277,8 +276,9 @@
       "result" : "lose",
       "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/28/images/kagayaki_ja.png"
     },
-    "technique_ja" : "Uwatenage",
-    "technique_category" : null
+    "technique_category" : null,
+    "technique" : "Uwatenage",
+    "technique_en" : "Over arm throw"
   }, {
     "east" : {
       "name" : "NISHIKIGI",
@@ -288,7 +288,6 @@
       "result" : "win",
       "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/41/images/nishikigi_ja.png"
     },
-    "technique" : "Default",
     "west" : {
       "name" : "HOKUTOFUJI",
       "perform" : "4-7",
@@ -297,8 +296,9 @@
       "result" : "lose",
       "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/21/images/hokutofuji_ja.png"
     },
-    "technique_ja" : "Fusen",
-    "technique_category" : "default"
+    "technique_category" : "default",
+    "technique" : "Fusen",
+    "technique_en" : "Default"
   }, {
     "east" : {
       "name" : "DAIAMAMI",
@@ -308,7 +308,6 @@
       "result" : "win",
       "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/50/images/daiamami_ja.png"
     },
-    "technique" : "Frontal force out",
     "west" : {
       "name" : "AMINISHIKI",
       "perform" : "2-9",
@@ -317,8 +316,9 @@
       "result" : "lose",
       "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/62/images/aminishiki_ja.png"
     },
-    "technique_ja" : "Yorikiri",
-    "technique_category" : "force"
+    "technique_category" : "force",
+    "technique" : "Yorikiri",
+    "technique_en" : "Frontal force out"
   }, {
     "east" : {
       "name" : "MYOGIRYU",
@@ -328,7 +328,6 @@
       "result" : "win",
       "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/57/images/myogiryu_ja.png"
     },
-    "technique" : "Frontal force out",
     "west" : {
       "name" : "CHIYONOKUNI",
       "perform" : "8-3",
@@ -337,8 +336,9 @@
       "result" : "lose",
       "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/22/images/chiyonokuni_ja.png"
     },
-    "technique_ja" : "Yorikiri",
-    "technique_category" : "force"
+    "technique_category" : "force",
+    "technique" : "Yorikiri",
+    "technique_en" : "Frontal force out"
   }, {
     "east" : {
       "name" : "ARAWASHI",
@@ -348,7 +348,6 @@
       "result" : "win",
       "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/19/images/arawashi_ja.png"
     },
-    "technique" : "Frontal force out",
     "west" : {
       "name" : "TAKEKAZE",
       "perform" : "4-7",
@@ -357,8 +356,9 @@
       "result" : "lose",
       "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/60/images/takekaze_ja.png"
     },
-    "technique_ja" : "Yorikiri",
-    "technique_category" : "force"
+    "technique_category" : "force",
+    "technique" : "Yorikiri",
+    "technique_en" : "Frontal force out"
   }, {
     "east" : {
       "name" : "ISHIURA",
@@ -368,7 +368,6 @@
       "result" : "lose",
       "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/52/images/ishiura_ja.png"
     },
-    "technique" : "Frontal force out",
     "west" : {
       "name" : "AOIYAMA",
       "perform" : "6-5",
@@ -377,8 +376,9 @@
       "result" : "win",
       "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/56/images/aoiyama_ja.png"
     },
-    "technique_ja" : "Yorikiri",
-    "technique_category" : "force"
+    "technique_category" : "force",
+    "technique" : "Yorikiri",
+    "technique_en" : "Frontal force out"
   }, {
     "east" : {
       "name" : "GAGAMARU",
@@ -388,7 +388,6 @@
       "result" : "lose",
       "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/43/images/gagamaru_ja.png"
     },
-    "technique" : "Underarm throw",
     "west" : {
       "name" : "KYOKUTAISEI",
       "perform" : "8-3",
@@ -397,7 +396,8 @@
       "result" : "win",
       "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/61/images/kyokutaisei_ja.png"
     },
-    "technique_ja" : "Shitatenage",
-    "technique_category" : "throw"
+    "technique_category" : "throw",
+    "technique" : "Shitatenage",
+    "technique_en" : "Underarm throw"
   } ]
 }

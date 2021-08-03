@@ -196,9 +196,9 @@
       "      Provides a quick overview of subject.\n" 
       "      Available subjects are 'sumo' and 'data'.\n"
       "      Defaults to explaining all subjects.\n"
-      " -> initialize\n"
+      " -> init-tables\n"
       "      Creates the mysql tables used by this project.\n"
-      " -> tear-down\n"
+      " -> drop-tables\n"
       "      Drops mysql tables created by this project.\n"
       " -> get-data year ___ month ___ <optional day ___>\n"
       "      Gets and writes data to files in 'default-data-dir'\n"
@@ -209,7 +209,7 @@
       "      Loads all previously un-loaded data\n" 
       "      from the optionally passed file or directory path.\n"
       "      If no path passed, loads from the default-data-dir, which\n"
-      "      is initially set to '/data' in this project repository.\n"
+      "      is initially set to './tournament_data' in this project repository.\n"
       "\nOnce your mysql database is populated,\n"
       "You can run 'lein ring server-headless' to start this API. **\n")))
 
@@ -217,8 +217,8 @@
   [& args]
   (case (first args)
     "explain"          (print-explain (first (drop 1 args)))
-    "initialize"       (db/create-tables)
-    "tear-down"        (db/drop-tables)
+    "init-tables"      (db/create-tables)
+    "drop-tables"      (db/drop-tables)
     "get-data"         (get-data (build-date (rest args)))
     "load-data"        (load-data (first (drop 1 args)))
     (print-help)))

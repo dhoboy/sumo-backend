@@ -157,3 +157,19 @@
           :percent
           (float (/ (:count elem) total))))
       coll)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Slawski Macros
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defmacro when-let-all
+  [bindings & then]
+  (cond
+    (empty? bindings)
+    `(do ~@then)
+    (= 1 (mod (count bindings) 2))
+    (throw (Exception. "when-let-all requires an even number of bindings"))
+    :else
+    (let [[var-name body & other-bindings] bindings]
+      `(when-let [~var-name ~body]
+         (when-let-all ~other-bindings ~@then)))))

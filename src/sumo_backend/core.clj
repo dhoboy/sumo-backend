@@ -57,11 +57,14 @@
      (keyword (get date-parts 2)) (get date-parts 3)
      (keyword (get date-parts 4)) (get date-parts 5)}))
 
+;; @bslawski, why aren't these (go (>! ...))? 
+;; i can't remember the reason why these are supposed to be blocking
+;; at the edges of the channels based part of the code?
 (defn get-data 
   "gets the bout data for passed in params"
   [{:keys [year month day] :or {year nil month nil day nil} :as date}]
   (data/start-data-pipeline)
-  (cond 
+  (cond
     (and year month day) (>!! data/fetch-chan date)
     (and year month (nil? day)) (dorun
                                   (map 

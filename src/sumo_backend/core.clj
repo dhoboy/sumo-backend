@@ -60,7 +60,7 @@
 (defn get-data 
   "gets the bout data for passed in params"
   [{:keys [year month day] :or {year nil month nil day nil} :as date}]
-  (data/start-data-pipeline) 
+  (data/start-data-pipeline)
   (cond 
     (and year month day) (>!! data/fetch-chan date)
     (and year month (nil? day)) (dorun
@@ -129,7 +129,7 @@
   ";; a Rikishi has more than one\n"
   ";; match on a given day.\n\n"))
 
-;; maybe mention here about technique...
+;; TODO: maybe mention here about technique?
 (def explain-data '(
   ";; Data for this project\n"
   ";; is loaded into a Mysql database\n"

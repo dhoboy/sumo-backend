@@ -87,35 +87,20 @@
 
 (defn get-all-ranks-in-tournament
   "returns all ranks competing in a tournament"
-  [{:keys [month year]}] ; hash set of every rank
-  (into #{} ; @bslawski, can this be done in one sql call?
-    (concat
-      (map
-        #(:east_rank %)
-        (jdbc/query 
-          mysql-db 
-          (sql/format
-            (sql/build
-              :select :east_rank
-              :modifiers [:distinct]
-              :from :bout
-              :where
-              [:and
-               [:= :year year]
-               [:= :month month]]))))
-      (map
-        #(:west_rank %)
-        (jdbc/query 
-          mysql-db 
-          (sql/format
-            (sql/build
-              :select :west_rank
-              :modifiers [:distinct]
-              :from :bout
-              :where
-              [:and
-               [:= :year year]
-               [:= :month month]])))))))
+  [{:keys [month year]}]
+  (set
+    (mapcat
+      #(vals (select-keys % [:east_rank :west_rank]))
+      (jdbc/query
+        mysql-db
+        (sql/format
+          (sql/build
+            :select [:east_rank :west_rank]
+            :from :bout
+            :where
+            [:and
+              [:= :year year]
+              [:= :month month]]))))))
 
   (defn get-rikishi-rank-in-tournament
     "returns rikishi's rank string and value in given tournament,
@@ -638,6 +623,7 @@
              :offset (* (- (Integer/parseInt page) 1) (Integer/parseInt per))]))))))
 
 ;; top level bout-list-by-criteria function
+;; @bslawski, should I memoize fns like this that make DB calls?
 (defn get-bout-list
   "given a set of criteria, returns a bout list.
    pass { :paginate true } to get the response paginated.

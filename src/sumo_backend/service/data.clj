@@ -173,12 +173,12 @@
         {:pretty true}))))
 
 ; available :func for update-basho-dir
-; don't forget to run initialize-technique-info before running this
 (defn add-technique-to-basho-file
   "not all files have technique_en and no files
    start with technique_category, backfills the
    file at the passed in filepath with more technique info"
   [filepath]
+  (when (empty? @technique-info) (initialize-technique-info))
   (let [document (parse-string (slurp filepath) true)]
     (update-technique-info (:data document))
     (spit ; write the technique info back to the datafile
@@ -225,9 +225,18 @@
 ;; Channels 
 ;;;;;;;;;;;;;
 
+(def channels (atom {}))
+
 (def fetch-chan (chan))  ;; holds {:year 2021 :month 7 :day 1} maps to fetch data for
 (def update-chan (chan)) ;; holds parsed response documents to update
 (def write-chan (chan))  ;; holds updated documents to write to file
+
+(swap!
+  channels
+  merge
+  {:fetch fetch-chan
+   :update update-chan
+   :write write-chan})
 
 ;;;;;;;;;;
 ;; Fetch
@@ -344,12 +353,29 @@
 ;; Start Fetch->Update->Write Pipeline
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; atom that holds onto the jobs
+;; so the JVM won't garbage collect them 
+;; when this function returns.
+
+;; this works in a REPL as is b/c the repl bascially a process
+;; retaining these. outside of that something else has to
+;; retain these or else they get garbage collected when all functions
+;; referencing them return.
+
+;; @bslawski having an issue running this from lein run still
+(def jobs (atom {}))
+
 (defn start-data-pipeline
   "Start the data fetch->update->write pipeline.
    Blocking put {:year :month :day} maps on the 
    fetch-chan to begin the process"
   []
-  (when (empty? @technique-info) (initialize-technique-info))
-  (fetch-data)
-  (update-data)
-  (write-data))
+  (when (empty? @technique-info) (initialize-technique-info)) ; implicit do is in any when
+  (swap! 
+    jobs
+    merge 
+    {:fetch (fetch-data)
+     :update (update-data)
+     :write (write-data)}))
+
+;; (>!! fetch-chan {:year 2021 :month 7 :day 1})

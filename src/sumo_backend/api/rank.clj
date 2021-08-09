@@ -9,9 +9,6 @@
 ;; All juryo rank values depend
 ;; on how many maegashira there are per basho.
 
-;; TODO--
-;; use memoization where possible to make some of these calls cache
-
 ;; sanyaku rank values are always the same
 (def sanyaku-rank-values
   {:yokozuna 1
@@ -80,24 +77,30 @@
 ;; Get the lowest Maegashira/Juryo Rank in a tournament
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn tournament-lowest-rank-and-file
+;; memoize here helps this fn go from
+;; "Elapsed time: 18.03663 msecs"
+;; to 
+;; "Elapsed time: 0.149619 msecs"!
+(def tournament-lowest-rank-and-file
   "for a given tournament, return the lowest maegashira or juryo
    rank value competing that we have data on.
    optional :level param takes either :maegashira or :juryo,
    defaults to :maegashira"
-  [{:keys [month year level] :or {level :maegashira}}]
-    (if (and month year)
-      (first
-        (sort
-          >
-          (filter
-            number? ; filter out nils, only want numbers here
-            (map
-              #(let [word (get-rank-keyword %)
-                     number (get-rank-and-file-number %)]
-                (and (= word level) number))
-              (db/get-all-ranks-in-tournament {:month month :year year})))))
-      nil))
+  (memoize
+    (fn
+      [{:keys [month year level] :or {level :maegashira}}]
+      (if (and month year)
+        (first
+          (sort
+            >
+            (filter
+              number? ; filter out nils, only want numbers here
+              (map
+                #(let [word (get-rank-keyword %)
+                       number (get-rank-and-file-number %)]
+                   (and (= word level) number))
+                (db/get-all-ranks-in-tournament {:month month :year year})))))
+        nil))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Map of all rank keywords in tournament to their value.
@@ -224,16 +227,15 @@
 ;; Get a Rikishi's rank for a tournament
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; some is equivalent to (first (filter identity (map ...)))
 (defn get-rank-string-in-tournament
   "iterates over a list of bouts comprising a tournament,
    returns rank if found, else returns nil.
    given string 'TAKAKEISHO', returns string 'Ozeki'"
-  [rikishi [bout & rest]] ; ["TAKAKEISHO" { ..bout } '({...} {...} ...)]
-  (if-let [rank (get-rank-string-in-bout {:rikishi rikishi :bout bout})]
-    rank
-    (if (empty? rest)
-      nil ; list is done, return nil
-      (get-rank-string-in-tournament rikishi rest)))) ; keep going
+  [rikishi bouts] ; ["TAKAKEISHO" '({ ..bout } {...} {...} ...)]
+  (some 
+    #(get-rank-string-in-bout {:rikishi rikishi :bout %})
+    bouts))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Current Rikishi Rank

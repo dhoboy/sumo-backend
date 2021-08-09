@@ -89,7 +89,7 @@
       "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/21/images/hokutofuji_ja.png"
     },
     "west" : {
-      "name" : "DAIEISHO", 
+      "name" : "DAIEISHO",
       "perform" : "3-7",
       "image" : "/nhkworld/en/tv/sumo/wrestlers/16/images/daieisho_190418.png",
       "rank" : "Komusubi",
@@ -97,7 +97,7 @@
       "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/32/images/daieisho_ja.png"
     },
     "technique_category" : null,
-    "technique": "Hikkake",
+    "technique" : "Hikkake",
     "technique_en" : "Arm grabbing force out"
   }, {
     "east" : {
@@ -216,7 +216,7 @@
       "result" : "win",
       "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/73/images/terutsuyoshi_ja.png"
     },
-    "technique": "Hikkake",
+    "technique" : "Hikkake",
     "technique_category" : null,
     "technique_en" : "Arm grabbing force out"
   }, {

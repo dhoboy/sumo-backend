@@ -1,11 +1,6 @@
 {
-  "hansoku" : {
-    "en" : "Disqualified",
-    "jp" : "Hansoku",
-    "cat" : null
-  },
-  "disqualified" : {
-    "en" : "Disqualified",
+  "" : {
+    "en" : "",
     "jp" : "Hansoku",
     "cat" : null
   },
@@ -39,9 +34,9 @@
     "jp" : "Okuri-nage",
     "cat" : null
   },
-  "okuri-nage" : {
-    "en" : "Rear throw down",
-    "jp" : "Okuri-nage",
+  "okurigake" : {
+    "en" : "Rear leg trip",
+    "jp" : "Okurigake",
     "cat" : null
   },
   "frontal lift out" : {
@@ -59,11 +54,6 @@
     "jp" : "Tsukite",
     "cat" : null
   },
-  "tsukite" : {
-    "en" : "Hand touch down",
-    "jp" : "Tsukite",
-    "cat" : null
-  },
   "shitatehineri" : {
     "en" : "Twisting underarm throw",
     "jp" : "Shitatehineri",
@@ -75,11 +65,6 @@
     "cat" : "push"
   },
   "2 handed head twist down" : {
-    "en" : "2 handed head twist down",
-    "jp" : "Tokkuri-nage",
-    "cat" : null
-  },
-  "tokkuri-nage" : {
     "en" : "2 handed head twist down",
     "jp" : "Tokkuri-nage",
     "cat" : null
@@ -109,9 +94,9 @@
     "jp" : "Kotehineri",
     "cat" : null
   },
-  "kotehineri" : {
-    "en" : "Arm locking twist down",
-    "jp" : "Kotehineri",
+  "disqualified" : {
+    "en" : "Disqualified",
+    "jp" : "Hansoku",
     "cat" : null
   },
   "hikiotoshi" : {
@@ -119,10 +104,25 @@
     "jp" : "Hikiotoshi",
     "cat" : "dodge"
   },
+  "suso-harai" : {
+    "en" : "Rear foot sweep",
+    "jp" : "Suso-harai",
+    "cat" : null
+  },
+  "hikkake" : {
+    "en" : "Arm grabbing force out",
+    "jp" : "Hikkake",
+    "cat" : null
+  },
   "yorikiri" : {
     "en" : "Frontal force out",
     "jp" : "Yorikiri",
     "cat" : "force"
+  },
+  "tokkuri-nage" : {
+    "en" : "2 handed head twist down",
+    "jp" : "Tokkuri-nage",
+    "cat" : null
   },
   "arm barring force down" : {
     "en" : "Arm barring force down",
@@ -144,17 +144,7 @@
     "jp" : "Mitokorozeme",
     "cat" : null
   },
-  "mitokorozeme" : {
-    "en" : "Triple attack force out",
-    "jp" : "Mitokorozeme",
-    "cat" : null
-  },
   "the fishermans throw" : {
-    "en" : "The fishermans throw",
-    "jp" : "Amiuchi",
-    "cat" : null
-  },
-  "amiuchi" : {
     "en" : "The fishermans throw",
     "jp" : "Amiuchi",
     "cat" : null
@@ -179,11 +169,6 @@
     "jp" : "Okurigake",
     "cat" : null
   },
-  "okurigake" : {
-    "en" : "Rear leg trip",
-    "jp" : "Okurigake",
-    "cat" : null
-  },
   "arm bar throw" : {
     "en" : "Arm bar throw",
     "jp" : "Tottari",
@@ -204,11 +189,6 @@
     "jp" : "Hikkake",
     "cat" : null
   },
-  "hikkake" : {
-    "en" : "Arm grabbing force out",
-    "jp" : "Hikkake",
-    "cat" : null
-  },
   "slap down" : {
     "en" : "Slap down",
     "jp" : "Hatakikomi",
@@ -218,6 +198,11 @@
     "en" : "Arm barring force out",
     "jp" : "Kimedashi",
     "cat" : "force"
+  },
+  "mitokorozeme" : {
+    "en" : "Triple attack force out",
+    "jp" : "Mitokorozeme",
+    "cat" : null
   },
   "tsukihiza" : {
     "en" : "Knee touch down",
@@ -233,6 +218,16 @@
     "en" : "Rear push down",
     "jp" : "Okuritaoshi",
     "cat" : "push"
+  },
+  "amiuchi" : {
+    "en" : "The fishermans throw",
+    "jp" : "Amiuchi",
+    "cat" : null
+  },
+  "okuri-nage" : {
+    "en" : "Rear throw down",
+    "jp" : "Okuri-nage",
+    "cat" : null
   },
   "okurihikiotoshi" : {
     "en" : "Rear pull down",
@@ -255,11 +250,6 @@
     "cat" : null
   },
   "head chop down" : {
-    "en" : "Head chop down",
-    "jp" : "Sokubiotoshi",
-    "cat" : null
-  },
-  "sokubiotoshi" : {
     "en" : "Head chop down",
     "jp" : "Sokubiotoshi",
     "cat" : null
@@ -309,11 +299,6 @@
     "jp" : "Koshikudake",
     "cat" : null
   },
-  "koshikudake" : {
-    "en" : "Inadvertent collapse",
-    "jp" : "Koshikudake",
-    "cat" : null
-  },
   "head lock throw" : {
     "en" : "Head lock throw",
     "jp" : "Kubinage",
@@ -333,6 +318,11 @@
     "en" : "2 handed arm twist down",
     "jp" : "Kainahineri",
     "cat" : "throw"
+  },
+  "kinjite" : {
+    "en" : "Foul",
+    "jp" : "Kinjite",
+    "cat" : null
   },
   "tsukiotoshi" : {
     "en" : "Thrust down",
@@ -362,6 +352,11 @@
   "twisting underarm throw" : {
     "en" : "Twisting underarm throw",
     "jp" : "Shitatehineri",
+    "cat" : null
+  },
+  "kotehineri" : {
+    "en" : "Arm locking twist down",
+    "jp" : "Kotehineri",
     "cat" : null
   },
   "under shoulder swing down" : {
@@ -434,11 +429,6 @@
     "jp" : "Kinjite",
     "cat" : null
   },
-  "kinjite" : {
-    "en" : "Foul",
-    "jp" : "Kinjite",
-    "cat" : null
-  },
   "no-technique_en" : {
     "en" : null,
     "jp" : "no-technique_en",
@@ -474,9 +464,9 @@
     "jp" : "Sakatottari",
     "cat" : null
   },
-  "sakatottari" : {
-    "en" : "Arm bar throw counter",
-    "jp" : "Sakatottari",
+  "sokubiotoshi" : {
+    "en" : "Head chop down",
+    "jp" : "Sokubiotoshi",
     "cat" : null
   },
   "hatakikomi" : {
@@ -487,6 +477,11 @@
   "utchari" : {
     "en" : "Backward pivot throw",
     "jp" : "Utchari",
+    "cat" : null
+  },
+  "koshikudake" : {
+    "en" : "Inadvertent collapse",
+    "jp" : "Koshikudake",
     "cat" : null
   },
   "twisting backward knee trip" : {
@@ -513,6 +508,11 @@
     "en" : "Hand pull down",
     "jp" : "Hikiotoshi",
     "cat" : "dodge"
+  },
+  "hansoku" : {
+    "en" : "Disqualified",
+    "jp" : "Hansoku",
+    "cat" : null
   },
   "uchigake" : {
     "en" : "Inside leg trip",
@@ -559,6 +559,11 @@
     "jp" : "Sotokomata",
     "cat" : null
   },
+  "sakatottari" : {
+    "en" : "Arm bar throw counter",
+    "jp" : "Sakatottari",
+    "cat" : null
+  },
   "tsuridashi" : {
     "en" : "Frontal lift out",
     "jp" : "Tsuridashi",
@@ -569,14 +574,14 @@
     "jp" : "Suso-harai",
     "cat" : null
   },
-  "suso-harai" : {
-    "en" : "Rear foot sweep",
-    "jp" : "Suso-harai",
-    "cat" : null
-  },
   "head twisting throw" : {
     "en" : "Head twisting throw",
     "jp" : "Kubihineri",
+    "cat" : null
+  },
+  "tsukite" : {
+    "en" : "Hand touch down",
+    "jp" : "Tsukite",
     "cat" : null
   },
   "isamiashi" : {

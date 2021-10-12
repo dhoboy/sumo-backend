@@ -264,6 +264,11 @@
     "jp" : "Sotogake",
     "cat" : null
   },
+  "ipponzeoi" : {
+    "en" : "One armed shoulder throw",
+    "jp" : "Ipponzeoi",
+    "cat" : null
+  },
   "abisetaoshi" : {
     "en" : "Backward force down",
     "jp" : "Abisetaoshi",
@@ -304,9 +309,19 @@
     "jp" : "Kubinage",
     "cat" : null
   },
+  "backward lean out" : {
+    "en" : "Backward lean out",
+    "jp" : "Ushiromotare",
+    "cat" : null
+  },
   "kotenage" : {
     "en" : "Arm lock throw",
     "jp" : "Kotenage",
+    "cat" : null
+  },
+  "one armed shoulder throw" : {
+    "en" : "One armed shoulder throw",
+    "jp" : "Ipponzeoi",
     "cat" : null
   },
   "shitatedashinage" : {
@@ -424,6 +439,11 @@
     "jp" : "Yoritaoshi",
     "cat" : "force"
   },
+  "okuritsuridashi" : {
+    "en" : "Rear lift out",
+    "jp" : "Okuritsuridashi",
+    "cat" : null
+  },
   "foul" : {
     "en" : "Foul",
     "jp" : "Kinjite",
@@ -534,6 +554,11 @@
     "jp" : "Shitatenage",
     "cat" : "throw"
   },
+  "rear lift out" : {
+    "en" : "Rear lift out",
+    "jp" : "Okuritsuridashi",
+    "cat" : null
+  },
   "rear pull down" : {
     "en" : "Rear pull down",
     "jp" : "Okurihikiotoshi",
@@ -543,6 +568,11 @@
     "en" : "Default",
     "jp" : "Fusen",
     "cat" : "default"
+  },
+  "ushiromotare" : {
+    "en" : "Backward lean out",
+    "jp" : "Ushiromotare",
+    "cat" : null
   },
   "harimanage" : {
     "en" : "Backward belt throw",

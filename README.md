@@ -3,7 +3,9 @@
 Clojure Backend for the Sumo Insights Web Application. Front end coming soon!
 
 From the root of the project:
+
 `lein run` to get started
+
 `lein ring server-headless` to start the api
 
 ## Prerequisites

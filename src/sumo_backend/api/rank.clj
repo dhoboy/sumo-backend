@@ -50,7 +50,7 @@
   [rank-str]
   (keyword
     (clojure.string/lower-case
-      (clojure.string/join 
+      (clojure.string/join
         "_"
         (map ; maping a fn over a collection, not sure what the kondo error is talking about here
           clojure.string/trim
@@ -67,7 +67,7 @@
   [rank-keyword]
   (if rank-keyword
     (clojure.string/capitalize
-      (clojure.string/join 
+      (clojure.string/join
         " #"
         (clojure.string/split
           (name rank-keyword) #"_")))
@@ -79,7 +79,7 @@
 
 ;; memoize here helps this fn go from
 ;; "Elapsed time: 18.03663 msecs"
-;; to 
+;; to
 ;; "Elapsed time: 0.149619 msecs"!
 (def tournament-lowest-rank-and-file
   "for a given tournament, return the lowest maegashira or juryo
@@ -177,7 +177,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn get-rank-string-in-bout
-  "for a given bout hashmap and rikishi name string, 
+  "for a given bout hashmap and rikishi name string,
    returns rikishi rank string if it exists,
    else returns nil"
   [{:keys [rikishi bout]}]
@@ -187,7 +187,7 @@
    nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Get a Rikishi's rank value from a bout 
+;; Get a Rikishi's rank value from a bout
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn get-rank-value-in-bout
@@ -233,7 +233,7 @@
    returns rank if found, else returns nil.
    given string 'TAKAKEISHO', returns string 'Ozeki'"
   [rikishi bouts] ; ["TAKAKEISHO" '({ ..bout } {...} {...} ...)]
-  (some 
+  (some
     #(get-rank-string-in-bout {:rikishi rikishi :bout %})
     bouts))
 
@@ -260,11 +260,16 @@
                   {:rikishi rikishi
                    :year (:year tournament)
                    :month (:month tournament)}))]
-     {:rank rank :tournament tournament} ; rank found, we're done
+     {:tournament tournament ; rank found, we're done
+      :rank rank
+      :rank_value (get-rank-value
+                    {:rank rank
+                     :year (:year tournament)
+                     :month (:month tournament)})}
      (get-rikishi-current-rank rikishi rest)))) ; rank not found, move to next tournament
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Rikishi Rank History 
+;; Rikishi Rank History
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn get-rikishi-rank-over-time

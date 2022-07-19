@@ -1,0 +1,6 @@
+I am only missing the data from Sept 2021, day 14. that json file is not on
+nhk.
+
+for some reason, my download code only downloads the first 13 days of a basho,
+it never downloads days 14 or 15, even if their files are on nhk. will look
+into this

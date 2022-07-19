@@ -20,7 +20,7 @@
 ;; (def mysql-keys (:local (parse-string (slurp key-file) true)))
 ;; the db here would seem to evaluate before the file was loaded?
 ;; i was getting Access denied for user ''@'localhost' to database 'sumo'
-;; errors the whole time 
+;; errors the whole time
 (defn db
   []
   (or
@@ -30,18 +30,18 @@
                           {:classname "com.mysql.jdbc.Driver"
                            :subprotocol "mysql"
                            :initial-pool-size 3
-                           :subname "//127.0.0.1:3306/sumo"
+                           :subname "//127.0.0.1:3306/sumo?characterEncoding=utf8"
                            :user (:user db-keys)
                            :password (:password db-keys)})]
       (reset! db-conn conn)
       conn)))
 
-;; On Connection Pooling-- Going with c3p0 for now. Further, Ben says: 
+;; On Connection Pooling-- Going with c3p0 for now. Further, Ben says:
 ;; You could also make an atom or ref that holds active DB connections
 ;; and threads running clojure.core.async/go-loops using those connections
 ;; to execute SQL queries they read from a clojure.core.async/chan, with
 ;; some other thread periodically checking the status of the query chan
-;; and scaling connections/threads accordingly. 
+;; and scaling connections/threads accordingly.
 
 ;; I think the query function can accept either a connection or config for a connection
 ;; If it gets config, it opens and closes its own connection
@@ -63,7 +63,7 @@
 ;; Create Tables
 ;;;;;;;;;;;;;;;;;;;
 
-;; @bslawski why does the connetion need to be bound in a let 
+;; @bslawski why does the connetion need to be bound in a let
 ;; inside the fn, not just made in a def one time (def conn (db))?
 (defn create-tables
   "Creates the rikishi and bout tables for
@@ -210,9 +210,12 @@
             (when year [[:= :year year]])
             (when month [[:= :month month]])
             (when day [[:= :day day]]))
-          :group-by :technique
+          :group-by [:technique :technique_en :technique_category]
           :order-by [[:%count.technique :desc]])))
     (println "No Mysql DB")))
+
+(comment
+  (println (get-rikishi-wins-by-technique {:rikishi "ENDO"})))
 
 (defn get-rikishi-wins-by-technique-category
   "returns technique categories rikishi has won by and frequency"
@@ -236,6 +239,9 @@
           :order-by [[:%count.technique_category :desc]])))
     (println "No Mysql DB")))
 
+(comment
+  (println (get-rikishi-wins-by-technique-category {:rikishi "ENDO"})))
+
 (defn get-rikishi-losses-to-technique
   "returns techniques rikishi has lost to and frequency"
   [{:keys [rikishi year month day]}]
@@ -254,9 +260,13 @@
             (when year [[:= :year year]])
             (when month [[:= :month month]])
             (when day [[:= :day day]]))
-          :group-by :technique
+          :group-by [:technique :technique_en :technique_category]
           :order-by [[:%count.technique :desc]])))
     (println "No Mysql DB")))
+
+(comment
+  (println (get-rikishi-losses-to-technique {:rikishi "ENDO"})))
+
 
 (defn get-rikishi-losses-to-technique-category
   "returns technique categories rikishi has lost to and frequency"
@@ -450,9 +460,9 @@
           :order-by [[:year :desc] [:month :desc]])))
     (println "No Mysql DB")))
 
-;; TODO - 
-;; Currently doesn't differentiate between 
-;; a rikishi going 0 - 15 and no rikishi data 
+;; TODO -
+;; Currently doesn't differentiate between
+;; a rikishi going 0 - 15 and no rikishi data
 ;; existing for given tournament
 (defn get-wins-in-tournament
   "returns list of rikishi wins in tournament"
@@ -474,9 +484,9 @@
           :order-by [[:%count.winner :desc]])))
     (println "No Mysql DB")))
 
-;; TODO - 
-;; Currently doesn't differentiate between 
-;; a rikishi going 15 - 0 and no rikishi data 
+;; TODO -
+;; Currently doesn't differentiate between
+;; a rikishi going 15 - 0 and no rikishi data
 ;; existing for given tournament
 (defn get-losses-in-tournament
   "returns list of rikishi losses in tournament"
@@ -506,7 +516,7 @@
 (defn build-rikishi-bout-history-query
   "given a :rikishi and :opponent, returns all bouts between the two.
    optionally takes--
-     :winner, :loser, :rank, :opponent-rank, 
+     :winner, :loser, :rank, :opponent-rank,
      :is-playoff, :year, :month, :day, and :total-only params"
   [{:keys [rikishi opponent winner loser technique technique-category
            rank opponent-rank is-playoff year month day total-only]}]
@@ -534,9 +544,9 @@
      (when day [[:= :day day]]))])
 
 (defn build-bouts-by-rikishi-query
-  "gets all bouts by :rikishi. 
+  "gets all bouts by :rikishi.
    optionally takes--
-     :winner, :loser, :rank, :is-playoff, 
+     :winner, :loser, :rank, :is-playoff,
      :year, :month, :day, and :total-only params"
   [{:keys [rikishi winner loser technique technique-category
            rank is-playoff year month day total-only]}]
@@ -653,7 +663,7 @@
        (when day [[:= :day day]])))])
 
 (defn build-bouts-by-date-query
-  "gets all bouts. 
+  "gets all bouts.
    optionally takes--
      :winner, :loser, :is-playoff,
      :year, :month, :day, and :total-only params"
@@ -719,7 +729,7 @@
 (defn bout-exists?
   "true if data exists for passed in bout record
    false otherwise. boolean :is_playoff represents
-   when rikishi face each other twice on the same day, 
+   when rikishi face each other twice on the same day,
    no logic at this time for > 2 matches on same day"
   [{:keys [east west is_playoff date]}]
   ;; should only be 1 or 0 bout here
@@ -812,8 +822,8 @@
     (println "No Mysql DB")))
 
 (defn read-basho-file
-  "read in a file representing one day's 
-   sumo basho results, and write bout and 
+  "read in a file representing one day's
+   sumo basho results, and write bout and
    rikishi records to the database if they
    haven't been previously written"
   [filepath]

@@ -94,6 +94,11 @@
     "jp" : "Kotehineri",
     "cat" : null
   },
+  "okuritsuriotoshi" : {
+    "en" : "Rear lifting body slam",
+    "jp" : "Okuritsuriotoshi",
+    "cat" : null
+  },
   "disqualified" : {
     "en" : "Disqualified",
     "jp" : "Hansoku",
@@ -112,6 +117,11 @@
   "hikkake" : {
     "en" : "Arm grabbing force out",
     "jp" : "Hikkake",
+    "cat" : null
+  },
+  "susoharai" : {
+    "en" : "Rear foot sweep",
+    "jp" : "Susoharai",
     "cat" : null
   },
   "yorikiri" : {
@@ -149,6 +159,11 @@
     "jp" : "Amiuchi",
     "cat" : null
   },
+  "rear lifting body slam" : {
+    "en" : "Rear lifting body slam",
+    "jp" : "Okuritsuriotoshi",
+    "cat" : null
+  },
   "uwatehineri" : {
     "en" : "Twisting over arm throw",
     "jp" : "Uwatehineri",
@@ -158,6 +173,11 @@
     "en" : "Arm bar throw",
     "jp" : "Tottari",
     "cat" : "throw"
+  },
+  "tokkurinage" : {
+    "en" : "2 handed head twist down",
+    "jp" : "Tokkurinage",
+    "cat" : null
   },
   "sotogake" : {
     "en" : "Outside leg trip",

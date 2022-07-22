@@ -1,6 +1,7 @@
 (ns sumo-backend.api.handler)
 (require '[compojure.core :refer :all])
 (require '[compojure.route :as route])
+(require '[ring.logger :refer [wrap-with-logger]])
 (require '[ring.middleware.json :refer [wrap-json-response]])
 (require '[ring.middleware.params :refer :all])
 (require '[ring.util.response :refer [response]])
@@ -10,6 +11,7 @@
 (require '[sumo-backend.api.rank :as rank])
 (require '[sumo-backend.api.technique :as technique])
 (require '[sumo-backend.api.tournament :as tournament])
+
 
 ;; TODO--
 ;; plan out ui in terms of
@@ -33,11 +35,11 @@
 ;; categories have colors!
 
 (defroutes app-routes
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;
   ;; ******* Rikishi information *************
   ;;   - routes take optional :page and :per
   ;;   - default to returning all as one list
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;
 
   (context ["/rikishi"] []
 
@@ -53,8 +55,8 @@
           (merge
             {:item-list (map
                           #(assoc
-                            %
-                            :rank (rank/get-rikishi-current-rank {:rikishi (:name %)}))
+                             %
+                             :rank (rank/get-rikishi-current-rank {:rikishi (:name %)}))
                           (db/list-rikishi))}
             (when page {:page page})
             (when per {:per per})
@@ -140,8 +142,7 @@
                     {:rikishi name :year year :month month :day day}))})}
             (when page {:page page})
             (when per {:per per})
-            (when (and (nil? page) (nil? per)) {:all true})))))
-    )
+            (when (and (nil? page) (nil? per)) {:all true}))))))
 
   (comment ;; add to Rikishi Detail page
     (println
@@ -164,11 +165,11 @@
             (db/get-rikishi-losses-to-technique
               {:rikishi "ENDO"}))})))
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;
   ;; ****** Tournament information ***********
   ;;   - routes take optional :page and :per
   ;;   - default to returning all as one list
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;
 
   (context ["/tournament"] []
 
@@ -180,27 +181,26 @@
             {:item-list (db/list-tournaments)}
             (when page {:page page})
             (when per {:per per})
-            (when (and (nil? page) (nil? per)) {:all true})))))
+            (when (and (nil? page) (nil? per)) {:all true}))))))
 
-    ;; TODO -- add tournament champion and location.
-    ;; details about tournament, e.g. rikishi records
-    (GET "/details/:year/:month" [year month page per]
-      (response
-        (utils/paginate-list
-          (merge
-            {:item-list (tournament/build-rikishi-tournament-records {:year year :month month})}
-            (when page {:page page})
-            (when per {:per per})
-            (when (and (nil? page) (nil? per)) {:all true})))))
-    )
+  ;; TODO -- add tournament champion and location.
+  ;; details about tournament, e.g. rikishi records
+  (GET "/details/:year/:month" [year month page per]
+    (response
+      (utils/paginate-list
+        (merge
+          {:item-list (tournament/build-rikishi-tournament-records {:year year :month month})}
+          (when page {:page page})
+          (when per {:per per})
+          (when (and (nil? page) (nil? per)) {:all true})))))
 
   ;; TODO -- Technique can be used on a separate Technique page...
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;
   ;; ******** Technique information **********
   ;;   - routes take optional :page and :per
   ;;   - default to returning all as one list
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;
 
   (context "/technique" []
 
@@ -308,12 +308,11 @@
                {:rikishi-losses-to-technique-category
                 (utils/add-percent-to-list
                   (db/get-all-losses-to-technique-category
-                    {:category "force"}))}))
-    )
+                    {:category "force"}))})))
 
   ;; TODO: Bout, Fare, and Upset can be used on the Matchups UI Page
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;
   ;; ********************* BOUT ****************************
   ;;   - Lists of bouts, against rikishi or by technique
   ;;   - "How does Endo do in general, or against Takakeisho?"
@@ -328,7 +327,7 @@
   ;;      :year, :month, :day => specify as you wish
   ;;   - Routes take optional :page and :per
   ;;   - Default to returning :page "1" with :per "15"
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;
 
   (context ["/bout"] []
 
@@ -348,7 +347,7 @@
              :year year
              :month month
              :day day}
-             ; :paginate true}
+            ;; :paginate true}
             (if page {:page page} nil)
             (if per  {:per per} nil)))))
 
@@ -371,7 +370,7 @@
              :year year
              :month month
              :day day}
-             ; :paginate true}
+            ;; :paginate true}
             (if page {:page page} nil)
             (if per  {:per per} nil)))))
 
@@ -397,12 +396,11 @@
              :year year
              :month month
              :day day}
-             ; :paginate true}
+            ;; :paginate true}
             (if page {:page page} nil)
-            (if per  {:per per} nil)))))
-    )
+            (if per  {:per per} nil))))))
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;
   ;; ************************* FARE ****************************
   ;;   - Lists of bouts by rikishi against certain ranks
   ;;   - "How does endo fare against Ozeki or higher rank?"
@@ -419,7 +417,7 @@
   ;;   - Pass nothing for matchup, defaults to specified rank only
   ;;   - Routes take optional :page and :per
   ;;   - Defaults to returning :page "1" with :per "15"
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;
 
   (context "/fare" []
 
@@ -444,7 +442,7 @@
              :year year
              :month month
              :day day}
-             ; :paginate true} ; higher ranks have lower rank-value
+            ;; :paginate true} ; higher ranks have lower rank-value
             (when (= matchup "includes_higher_ranks")
               {:comparison "<="})
             (when (= matchup "higher_ranks_only")
@@ -474,7 +472,7 @@
              :year year
              :month month
              :day day}
-             ; :paginate true}
+            ;; :paginate true}
             (when (= matchup "includes_higher_ranks")
               {:comparison "<="})
             (when (= matchup "higher_ranks_only")
@@ -504,7 +502,7 @@
              :year year
              :month month
              :day day}
-             ; :paginate true} ; higher ranks have lower rank-value
+            ;; :paginate true} ; higher ranks have lower rank-value
             (when (= matchup "includes_higher_ranks")
               {:comparison "<="})
             (when (= matchup "higher_ranks_only")
@@ -514,10 +512,9 @@
             (when (= matchup "lower_ranks_only")
               {:comparison ">"})
             (when page {:page page})
-            (when per {:per per})))))
-    )
+            (when per {:per per}))))))
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;
   ;; ********************** UPSET ***********************
   ;;   - Lists of upsets rikishi achieved or surrendered
   ;;   - "How many time did Endo beat someone 5 ranks
@@ -534,7 +531,7 @@
   ;;   - Pass nothing for matchup, defaults to specified rank-delta only
   ;;   - Routes take optional :page and :per
   ;;   - Defauls to returning :page "1" with :per "15"
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;
 
   (context "/upset" []
 
@@ -553,7 +550,7 @@
              :year year
              :month month
              :day day}
-             ; :paginate true}
+            ;; :paginate true}
             (when (= matchup "includes_larger")
               {:comparison ">="})
             (when (= matchup "larger_only")
@@ -579,7 +576,7 @@
              :year year
              :month month
              :day day}
-             ; :paginate true}
+            ;; :paginate true}
             (when (= matchup "includes_larger")
               {:comparison ">="})
             (when (= matchup "larger_only")
@@ -605,7 +602,7 @@
              :year year
              :month month
              :day day}
-             ; :paginate true}
+            ;; :paginate true}
             (when (= matchup "includes_larger")
               {:comparison ">="})
             (when (= matchup "larger_only")
@@ -615,10 +612,9 @@
             (when (= matchup "smaller_only")
               {:comparison "<"})
             (when page {:page page})
-            (when per {:per per})))))
-    )
+            (when per {:per per}))))))
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;
   ;; ******************** PERFORM ***************************
   ;;   - Lists of bouts by rank and technique
   ;;   - "How do ozeki perform? Against oshidashi?"
@@ -629,7 +625,7 @@
   ;;     :year, :month, :day => specify as you wish
   ;;  - Routes take optional :page and :per
   ;;  - Defaults to returning :page "1" with :per "15"
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;
 
   (context "/perform" []
 
@@ -654,14 +650,16 @@
     ;;       :paginate true}
     ;;      (when page {:page page})
     ;;      (when per {:per per})))))
-    ;;(GET "/win/:rank/:technique" )
-    ;;(GET "/lose/:rank/:technique")
+    ;; (GET "/win/:rank/:technique" )
+    ;; (GET "/lose/:rank/:technique")
     )
 
   (route/not-found "Route Not Found"))
 
+
 (def app
   (-> app-routes
-      (wrap-params)
-      (wrap-cors #".*") ; lock down to just this app's front-end when deploying
-      (wrap-json-response)))
+    (wrap-params)
+    (wrap-cors #".*") ; lock down to just this app's front-end when deploying
+    (wrap-with-logger {:response-keys [:headers]})
+    (wrap-json-response)))

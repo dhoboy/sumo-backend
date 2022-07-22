@@ -1,11 +1,13 @@
-{:linters {:unused-namespace
+ {:linters {:unused-namespace
            {:exclude [clj-kondo.impl.rewrite-clj-patch
                       rewrite-clj.parser.core
                       clj-kondo.impl.var-info-gen
                       clj-kondo.impl.node.seq
-                      clj-kondo.impl.profiler]}
+                      clj-kondo.impl.profiler
+                      clj-kondo.impl.utils]}
            :unused-referred-var
-           {:exclude {clojure.test [is deftest testing]}}
+           {:exclude {clojure.test [is deftest testing]
+                      clj-kondo.impl.utils [err]}}
            :type-mismatch
            {:level :warning
             :namespaces
@@ -16,15 +18,21 @@
              clj-kondo.impl.config #include "../src/clj_kondo/impl/config.types.edn"
              clj-kondo.impl.findings #include "../src/clj_kondo/impl/findings.types.edn"
              }}
+           :reduce-without-init {:level :warning}
            :missing-docstring {:level :off}
-           :unresolved-namespace {:level :off}
-           :unresolved-symbol {:level :off}
-           :refer-all {:level :off}
            :unsorted-required-namespaces {:level :warning}}
  :lint-as {me.raynes.conch/programs clojure.core/declare
            me.raynes.conch/let-programs clojure.core/let
            datalog.parser.type/deftrecord clojure.core/defrecord
            clj-kondo.impl.rewrite-clj.potemkin/defprotocol+ clojure.core/defprotocol
-           clj-kondo.impl.rewrite-clj.potemkin/import-vars potemkin/import-vars}
+           clj-kondo.impl.rewrite-clj.potemkin/import-vars potemkin/import-vars
+           clj-kondo.test-utils/with-temp-dir clojure.core/let
+           clojure.data.json/codepoint-case clojure.core/case
+           babashka.fs/with-temp-dir clojure.core/let}
  :output {:exclude-files ["src/clj_kondo/impl/rewrite_clj_patch.clj"]}
- :hooks {:analyze-call {clj-kondo.impl.utils/one-of macroexpand.one-of/one-of}}}
+ :hooks {:analyze-call {clj-kondo.impl.utils/one-of hooks.one-of/one-of}}
+ ;; we don't use this in clj-kondo since we need to exclude certain configs for testing
+ :auto-load-configs false
+ :ns-groups [{:pattern ".*-test"
+              :name test-namespaces}]
+ :config-in-ns {test-namespaces {:linters {:warn-on-reflection {:level :off}}}}

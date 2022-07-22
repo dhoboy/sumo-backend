@@ -10,3 +10,6 @@ pom.xml.asc
 /.nrepl-port
 **/.DS_Store
 /keys
+.lsp/
+.git/
+.clj-kondo/.cache

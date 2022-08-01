@@ -1,6 +1,6 @@
-(ns sumo-backend.api.rank)
+(ns sumo-backend.utils.rank)
 (require '[sumo-backend.service.mysql :as db])
-(require '[sumo-backend.utils :as utils])
+(require '[sumo-backend.utils.helper :as helper])
 
 ;; Everything to do with Rikishi Ranks
 
@@ -208,7 +208,7 @@
    rikishi opponent's rank value"
   [{:keys [rikishi bout]}]
   (get-rank-string-in-bout
-    {:rikishi (utils/get-bout-opponent {:rikishi rikishi :bout bout})
+    {:rikishi (helper/get-bout-opponent {:rikishi rikishi :bout bout})
      :bout bout}))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -220,7 +220,7 @@
    rikishi opponent's rank value"
   [{:keys [rikishi bout]}]
   (get-rank-value-in-bout
-    {:rikishi (utils/get-bout-opponent {:rikishi rikishi :bout bout})
+    {:rikishi (helper/get-bout-opponent {:rikishi rikishi :bout bout})
      :bout bout}))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

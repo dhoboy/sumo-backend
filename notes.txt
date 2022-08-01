@@ -1,0 +1,20 @@
+;; TODO--
+;; plan out ui in terms of
+;; what calls we need where
+;; design the api to match the UI needs
+
+;; TODO--
+;; see about deriving urls for theses matches
+;; on nhk japan site
+
+;; TODO--
+;; Ben has techniques grouped into 4 categories
+;; chest to chest - moving forward
+;; chset to chest - throwing side
+;; arms length - moving forward
+;; arms length - using opponents weight against them
+
+;; in FE, color code the japanese technique word
+;; colors for the type of technique
+;; so ex: hatakikomi is colored red for its category color
+;; categories have colors!

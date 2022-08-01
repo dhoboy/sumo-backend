@@ -1,40 +1,16 @@
 (ns sumo-backend.api.handler)
-(require '[compojure.core :refer :all])
-(require '[compojure.route :as route])
+(require '[reitit.core :as r])
 (require '[ring.logger :refer [wrap-with-logger]])
 (require '[ring.middleware.json :refer [wrap-json-response]])
 (require '[ring.middleware.params :refer :all])
 (require '[ring.util.response :refer [response]])
 (require '[jumblerg.middleware.cors :refer [wrap-cors]])
-(require '[sumo-backend.utils :as utils])
+(require '[sumo-backend.utils.helper :as helper])
 (require '[sumo-backend.service.mysql :as db])
 (require '[sumo-backend.api.rank :as rank])
 (require '[sumo-backend.api.technique :as technique])
 (require '[sumo-backend.api.tournament :as tournament])
 
-
-;; TODO--
-;; plan out ui in terms of
-;; what calls we need where
-;; design the api to match the UI needs
-
-;; TODO--
-;; see about deriving urls for theses matches
-;; on nhk japan site
-
-;; TODO--
-;; Ben has techniques grouped into 4 categories
-;; chest to chest - moving forward
-;; chset to chest - throwing side
-;; arms length - moving forward
-;; arms length - using opponents weight against them
-
-;; in FE, color code the japanese technique word
-;; colors for the type of technique
-;; so ex: hatakikomi is colored red for its category color
-;; categories have colors!
-
-(defroutes app-routes
   ;;
   ;; ******* Rikishi information *************
   ;;   - routes take optional :page and :per
@@ -51,7 +27,7 @@
     ;; list of all rikishi
     (GET "/list" [page per]
       (response
-        (utils/paginate-list
+        (helper/paginate-list
           (merge
             {:item-list (map
                           #(assoc
@@ -65,7 +41,7 @@
     ;; specific rikishi record
     (GET "/details/:name" [name page per]
       (response
-        (utils/paginate-list
+        (helper/paginate-list
           (merge
             {:item-list (db/get-rikishi name)}
             (when page {:page page})
@@ -79,7 +55,7 @@
     ;; current rank is rank in last basho rikishi competed in
     (GET "/current_rank/:name" [name page per]
       (response
-        (utils/paginate-list
+        (helper/paginate-list
           (merge
             {:item-list [(rank/get-rikishi-current-rank {:rikishi name})]}
             (when page {:page page})
@@ -92,7 +68,7 @@
     ;; list of rikishi's rank changes over time
     (GET "/rank_over_time/:name" [name page per]
       (response
-        (utils/paginate-list
+        (helper/paginate-list
           (merge
             {:item-list (rank/get-rikishi-rank-over-time {:rikishi name})}
             (when page {:page page})
@@ -105,12 +81,12 @@
     ;; list of rikishi tournament results over time
     (GET "/results_over_time/:name" [name page per]
       (response
-        (utils/paginate-list
+        (helper/paginate-list
           (merge
             {:item-list (tournament/get-rikishi-results-over-time {:rikishi name})}
             (when page {:page page})
             (when per {:per per})
-            (when (and (nil? page) (nil? per)) {:all true})))))
+              (when (and (nil? page) (nil? per)) {:all true})))))
 
     (comment ;; add to Rikishi Detail page... later maybe
       (println (tournament/get-rikishi-results-over-time {:rikishi "ENDO"})))
@@ -119,25 +95,25 @@
     ;; basic stats on techniques and categories rikishi wins / looses by
     (GET "/technique_breakdown/:name" [name year month day page per]
       (response
-        (utils/paginate-list
+        (helper/paginate-list
           (merge
             {:item-list
              (conj
                []
                {:wins-by-technique-category
-                (utils/add-percent-to-list
+                (helper/add-percent-to-list
                   (db/get-rikishi-wins-by-technique-category
                     {:rikishi name :year year :month month :day day}))}
                {:wins-by-technique
-                (utils/add-percent-to-list
+                (helper/add-percent-to-list
                   (db/get-rikishi-wins-by-technique
                     {:rikishi name :year year :month month :day day}))}
                {:losses-to-technique-category
-                (utils/add-percent-to-list
+                (helper/add-percent-to-list
                   (db/get-rikishi-losses-to-technique-category
                     {:rikishi name :year year :month month :day day}))}
                {:losses-to-technique
-                (utils/add-percent-to-list
+                (helper/add-percent-to-list
                   (db/get-rikishi-losses-to-technique
                     {:rikishi name :year year :month month :day day}))})}
             (when page {:page page})
@@ -149,19 +125,19 @@
       (conj
         []
         {:wins-by-technique-category
-          (utils/add-percent-to-list
+          (helper/add-percent-to-list
             (db/get-rikishi-wins-by-technique-category
               {:rikishi "ENDO"}))}
         {:wins-by-technique
-          (utils/add-percent-to-list
+          (helper/add-percent-to-list
             (db/get-rikishi-wins-by-technique
               {:rikishi "ENDO"}))}
         {:losses-to-technique-category
-          (utils/add-percent-to-list
+          (helper/add-percent-to-list
             (db/get-rikishi-losses-to-technique-category
              {:rikishi "ENDO"}))}
         {:losses-to-technique
-          (utils/add-percent-to-list
+          (helper/add-percent-to-list
             (db/get-rikishi-losses-to-technique
               {:rikishi "ENDO"}))})))
 
@@ -176,23 +152,23 @@
     ;; list of all tournaments data exists for
     (GET "/list" [page per]
       (response
-        (utils/paginate-list
+        (helper/paginate-list
           (merge
             {:item-list (db/list-tournaments)}
             (when page {:page page})
             (when per {:per per})
-            (when (and (nil? page) (nil? per)) {:all true}))))))
+            (when (and (nil? page) (nil? per)) {:all true})))))
 
   ;; TODO -- add tournament champion and location.
   ;; details about tournament, e.g. rikishi records
   (GET "/details/:year/:month" [year month page per]
     (response
-      (utils/paginate-list
+      (helper/paginate-list
         (merge
           {:item-list (tournament/build-rikishi-tournament-records {:year year :month month})}
           (when page {:page page})
           (when per {:per per})
-          (when (and (nil? page) (nil? per)) {:all true})))))
+          (when (and (nil? page) (nil? per)) {:all true}))))))
 
   ;; TODO -- Technique can be used on a separate Technique page...
 
@@ -212,7 +188,7 @@
     ;; specified :year, :month, :day
     (GET "/list" [year month day page per]
       (response
-        (utils/paginate-list
+        (helper/paginate-list
           (merge
             {:item-list (db/list-techniques {:year year :month month :day day})}
             (when page {:page page})
@@ -222,7 +198,7 @@
     ;; list of all categories and technique keys classified within
     (GET "/categories" [page per]
       (response
-        (utils/paginate-list
+        (helper/paginate-list
           (merge
             {:item-list (technique/get-categories)}
             (when page {:page page})
@@ -236,20 +212,20 @@
     ;; takes optional :year :month :day params
     (GET "/details/:technique" [technique year month day page per]
       (response
-        (utils/paginate-list
+        (helper/paginate-list
           (merge
             {:item-list
              (conj
                []
                {:wins-by-technique
-                (utils/add-percent-to-list
+                (helper/add-percent-to-list
                   (db/get-all-wins-by-technique
                     {:technique technique
                      :year year
                      :month month
                      :day day}))}
                {:losses-to-technique
-                (utils/add-percent-to-list
+                (helper/add-percent-to-list
                   (db/get-all-losses-to-technique
                     {:technique technique
                      :year year
@@ -263,11 +239,11 @@
       (conj
         []
         {:wins-by-technique
-          (utils/add-percent-to-list
+          (helper/add-percent-to-list
             (db/get-all-wins-by-technique
               {:technique "oshidashi"}))}
         {:losses-to-technique
-          (utils/add-percent-to-list
+          (helper/add-percent-to-list
             (db/get-all-losses-to-technique
               {:technique "oshidashi"}))}))
 
@@ -275,20 +251,20 @@
     ;; takes optional :year :month :day params
     (GET "/category_details/:category" [category year month day page per]
       (response
-        (utils/paginate-list
+        (helper/paginate-list
           (merge
             {:item-list
              (conj
                []
                {:rikishi-wins-by-technique-category
-                (utils/add-percent-to-list
+                (helper/add-percent-to-list
                   (db/get-all-wins-by-technique-category
                     {:category category
                      :year year
                      :month month
                      :day day}))}
                {:rikishi-losses-to-technique-category
-                (utils/add-percent-to-list
+                (helper/add-percent-to-list
                   (db/get-all-losses-to-technique-category
                     {:category category
                      :year year
@@ -302,11 +278,11 @@
       (conj
                []
                {:rikishi-wins-by-technique-category
-                (utils/add-percent-to-list
+                (helper/add-percent-to-list
                   (db/get-all-wins-by-technique-category
                     {:category "force"}))}
                {:rikishi-losses-to-technique-category
-                (utils/add-percent-to-list
+                (helper/add-percent-to-list
                   (db/get-all-losses-to-technique-category
                     {:category "force"}))})))
 

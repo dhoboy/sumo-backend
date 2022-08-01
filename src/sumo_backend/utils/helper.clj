@@ -1,13 +1,16 @@
-(ns sumo-backend.utils)
+(ns sumo-backend.utils.helper
+  (:require [clojure.string :as str])
+  (:require [clojure.java.io :as io]))
 
-;; Utils functions accomplishing common tasks
+
+;; Helper functions accomplishing common tasks
 
 ;; let user point to their own custom data path?
 (def default-data-dir "./tournament_data")
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 ;; Paginate a list of items
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 
 (defn paginate-list
   "Given a sequence :item-list, returns that list paginated.
@@ -22,35 +25,38 @@
       {:pagination {:page page :per per :total (count item-list)}
        :items (take per (drop (* (- page 1) per) item-list))})))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Get a Rikishi's opponent from a bout 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;
+;; Get a Rikishi's opponent from a bout
+;;
 
 (defn get-bout-opponent
   "for a given rikishi and bout
    return the bout opponent name string"
   [{:keys [rikishi bout]}]
   (or
-   (and (= (:east bout) (clojure.string/upper-case rikishi)) (:west bout))
-   (and (= (:west bout) (clojure.string/upper-case rikishi)) (:east bout))))
+    (and (= (:east bout) (str/upper-case rikishi)) (:west bout))
+    (and (= (:west bout) (str/upper-case rikishi)) (:east bout))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;
 ;; Did the rikishi win/lose given bout?
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 
 (defn rikishi-win-or-lose-bout
   "given a rikishi, bout, and an outcome
    return true or false
    according to the expression"
   [{:keys [rikishi outcome bout]}]
-  ((or 
-    (and (= outcome "lose") not=)
-    (and (= outcome "win") =))
-   (:winner bout) (clojure.string/upper-case rikishi)))
+  ((or
+     (and (= outcome "lose") not=)
+     (and (= outcome "win") =))
+   (:winner bout) (str/upper-case rikishi)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;
 ;; Get the winner from a given pair of east and west maps
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 
 (defn get-bout-winner
   "determines winner for passed in east and west records"
@@ -59,9 +65,10 @@
     (:name east)
     (:name west)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;
 ;; Get the looser from a given pair of east and west maps
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 
 (defn get-bout-loser
   "determines loser for passed in east and west records"
@@ -70,9 +77,10 @@
     (:name west)
     (:name east)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;
 ;; Get the date from a filepath
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 
 (defn get-date
   "takes in a filepath and parses out the date.
@@ -82,22 +90,23 @@
    Ex: I find this more readable 'day1__03_2021.json'"
   [filepath]
   (let [parts (-> filepath
-                  (clojure.string/split #"\/")
-                  last
-                  (clojure.string/split #"\.")
-                  first
-                  (clojure.string/split #"\_"))
+                (str/split #"\/")
+                last
+                (str/split #"\.")
+                first
+                (str/split #"\_"))
         date (->> parts
-                  (map #(clojure.string/split % #"day"))
-                  flatten
-                  (filter #(not= "" %)))]
+               (map #(str/split % #"day"))
+               flatten
+               (filter #(not= "" %)))]
     {:day (Integer/parseInt (nth date 0))
      :month (Integer/parseInt (nth date 1))
      :year (Integer/parseInt (nth date 2))}))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;
 ;; Translate string filepath to file object
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 
 (defn path->obj
   "given a path string, return
@@ -105,13 +114,14 @@
   [path]
   (if (some? path) ; some? is (not (nil? __))
     (file-seq
-     (clojure.java.io/file
-      path))
+      (io/file
+        path))
     nil))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;
 ;; Translate string to keyword
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 
 (defn str->keyword
   "given a string, returns it as a keyword.
@@ -121,17 +131,17 @@
   (when
     (and
       (string? str)
-      (not (clojure.string/blank? str)))
+      (not (str/blank? str)))
     (-> str
-        clojure.string/trim
-        clojure.string/lower-case
-        keyword)))
+      str/trim
+      str/lower-case
+      keyword)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 ;; Zero pad number strings
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 
-(defn zero-pad 
+(defn zero-pad
   "given any passed in number as a string or number,
    returns a zero-padded string for that number.
    e.g. given 7 or '7' => '07'"
@@ -141,26 +151,28 @@
       (str 0 val)
       (str val))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;
 ;; Add percent to list
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 
 (defn add-percent-to-list
   "given a list where each item has a :count key,
    adds :percent of each item in the list"
   [coll]
   (let [total (reduce + (map #(:count %) coll))]
-    (map 
+    (map
       (fn [elem]
-        (assoc 
+        (assoc
           elem
           :percent
           (float (/ (:count elem) total))))
       coll)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;
 ;; Slawski Macros
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 
 (defmacro when-let-all
   [bindings & then]

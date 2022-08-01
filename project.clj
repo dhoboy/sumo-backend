@@ -7,7 +7,7 @@
                  [org.clojure/core.async "1.3.618"]
                  [org.clojure/java.jdbc "0.7.11"]
                  [clojure.jdbc/clojure.jdbc-c3p0 "0.3.3"]
-                 [compojure "1.6.1"]
+                 [metosin/reitit "0.5.5"]
                  [cheshire "5.10.0"]
                  [mysql/mysql-connector-java "8.0.11"]
                  [honeysql "1.0.444"]

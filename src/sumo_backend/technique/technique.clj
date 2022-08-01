@@ -1,5 +1,5 @@
-(ns sumo-backend.api.technique)
-(require '[sumo-backend.utils :as utils])
+(ns sumo-backend.technique.technique)
+(require '[sumo-backend.utils.helper :as helper])
 
 ;; we will have to manually categorize
 ;; new techniques as we encounter them
@@ -36,7 +36,7 @@
    :default
      #{:fusen}
   })
- 
+
 (defn get-category
   "given a technique key or technique_ja string,
    return what category it is in"
@@ -47,7 +47,7 @@
         (% categories)
         (if (keyword? technique)
           technique
-          (utils/str->keyword technique)))
+          (helper/str->keyword technique)))
       (keys categories))))
 
 (defn get-categories

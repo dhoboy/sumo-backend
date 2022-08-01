@@ -5,7 +5,7 @@
 (require '[cheshire.core :refer :all]) ; parses json
 (require '[jdbc.pool.c3p0 :as c3p0])
 (require '[sumo-backend.service.mysql-schema :as schema])
-(require '[sumo-backend.utils :as utils :refer [when-let-all]])
+(require '[sumo-backend.utils.helper :as helper :refer [when-let-all]])
 
 ;; Namespace that connects to MySql
 
@@ -794,8 +794,8 @@
         :east_rank (:rank east)
         :west (:name west)
         :west_rank (:rank west)
-        :winner (utils/get-bout-winner east west)
-        :loser (utils/get-bout-loser east west)
+        :winner (helper/get-bout-winner east west)
+        :loser (helper/get-bout-loser east west)
         :is_playoff is_playoff
         :technique technique
         :technique_en technique_en
@@ -829,7 +829,7 @@
   [filepath]
   (println "reading filepath:" filepath)
   (let [data (parse-string (slurp filepath) true)
-        date (utils/get-date filepath)]
+        date (helper/get-date filepath)]
     (dorun ; usually what you need is dorun, doall returns results of map, dorun forces the lazy map to execute
       (map
         (fn [{:keys [east west] :as record}]
@@ -853,7 +853,7 @@
   (doall
     (map
       (fn [filepath]
-        (let [date (utils/get-date filepath)]
+        (let [date (helper/get-date filepath)]
           (when (not (full-tournament-data-exists? date))
             (read-basho-file filepath))))
       all-files)))

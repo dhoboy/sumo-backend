@@ -1,12 +1,23 @@
-(ns sumo-backend.utils.helper
-  (:require [clojure.string :as str])
-  (:require [clojure.java.io :as io]))
+(ns sumo-backend.utils
+  (:require [clojure.string :as str]
+            [clojure.java.io :as io]))
 
 
-;; Helper functions accomplishing common tasks
+;;
+;; Namespace providing helper functions that accomplish common tasks
+;; This namespace will have no project specific dependencies, so it can be
+;; used anywhere throughout the project.
+;;
 
 ;; let user point to their own custom data path?
 (def default-data-dir "./tournament_data")
+
+
+(defn in?
+  "true if collection contains elm"
+  [coll elm]
+  (some #(= elm %) coll))
+
 
 ;;
 ;; Paginate a list of items
@@ -137,6 +148,7 @@
       str/lower-case
       keyword)))
 
+
 ;;
 ;; Zero pad number strings
 ;;
@@ -174,7 +186,9 @@
 ;; Slawski Macros
 ;;
 
+
 (defmacro when-let-all
+  #_{:clj-kondo/ignore [:unresolved-symbol]}
   [bindings & then]
   (cond
     (empty? bindings)

@@ -4,6 +4,8 @@
     [sumo-backend.data.bout :refer [get-bout-list]]))
 
 
+;; all bouts.
+;; e.g. /bout/list?year=2021&winner=endo
 (defn handler
   [winner
    loser

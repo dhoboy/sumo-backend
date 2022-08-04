@@ -75,7 +75,7 @@
   "list all techniques used in bouts optionally constrained
    to passed in year, month, day params"
   [{:keys [year month day]}]
-  (if-let [conn (db/conn)]
+  (if-let [conn (db/db-conn)]
     (jdbc/query
       conn
       (sql/format
@@ -98,7 +98,7 @@
 (defn get-rikishi-wins-by-technique
   "returns techniques rikishi has won by and frequency"
   [{:keys [rikishi year month day]}]
-  (if-let [conn (db/conn)]
+  (if-let [conn (db/db-conn)]
     (jdbc/query
       conn
       (sql/format
@@ -125,7 +125,7 @@
 (defn get-rikishi-wins-by-technique-category
   "returns technique categories rikishi has won by and frequency"
   [{:keys [rikishi year month day]}]
-  (if-let [conn (db/conn)]
+  (if-let [conn (db/db-conn)]
     (jdbc/query
       conn
       (sql/format
@@ -152,7 +152,7 @@
 (defn get-rikishi-losses-to-technique
   "returns techniques rikishi has lost to and frequency"
   [{:keys [rikishi year month day]}]
-  (if-let [conn (db/conn)]
+  (if-let [conn (db/db-conn)]
     (jdbc/query
       conn
       (sql/format
@@ -179,7 +179,7 @@
 (defn get-rikishi-losses-to-technique-category
   "returns technique categories rikishi has lost to and frequency"
   [{:keys [rikishi year month day]}]
-  (if-let [conn (db/conn)]
+  (if-let [conn (db/db-conn)]
     (jdbc/query
       conn
       (sql/format
@@ -203,7 +203,7 @@
 (defn get-all-wins-by-technique
   "returns rikishi and number of times they have won with technique"
   [{:keys [technique year month day]}]
-  (if-let [conn (db/conn)]
+  (if-let [conn (db/db-conn)]
     (jdbc/query
       conn
       (sql/format
@@ -225,7 +225,7 @@
 (defn get-all-wins-by-technique-category
   "returns rikishi and number of times they have won with technique category"
   [{:keys [category year month day]}]
-  (if-let [conn (db/conn)]
+  (if-let [conn (db/db-conn)]
     (jdbc/query
       conn
       (sql/format
@@ -247,7 +247,7 @@
 (defn get-all-losses-to-technique
   "returns rikishi and number of times they have lost to technique"
   [{:keys [technique year month day]}]
-  (if-let [conn (db/conn)]
+  (if-let [conn (db/db-conn)]
     (jdbc/query
       conn
       (sql/format
@@ -269,7 +269,7 @@
 (defn get-all-losses-to-technique-category
   "returns rikishi and number of times they have lost to technique category"
   [{:keys [category year month day]}]
-  (if-let [conn (db/conn)]
+  (if-let [conn (db/db-conn)]
     (jdbc/query
       conn
       (sql/format
@@ -294,7 +294,7 @@
    map keys are the technique Japanese name for each technique
    e.g. {:oshidashi {:jp 'oshidashi' :en 'Frontal push out' :cat 'push'}}"
   [{:keys [year month]}]
-  (if-let [conn (db/conn)]
+  (if-let [conn (db/db-conn)]
     (reduce
       (fn [acc {:keys [technique technique_en technique_category]}]
         (assoc

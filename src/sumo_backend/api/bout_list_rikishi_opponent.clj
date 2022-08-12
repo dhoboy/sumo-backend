@@ -12,18 +12,8 @@
 (defn handler
   [rikishi
    opponent
-   winner
-   loser
-   technique
-   technique_category
-   rank
-   opponent_rank
-   is_playoff
-   year
-   month
-   day
-   page
-   per]
+   {:strs [winner loser technique technique_category rank opponent_rank
+           is_playoff year month day page per]}]
   (response
     (get-bout-list
       (merge
@@ -39,6 +29,5 @@
          :year year
          :month month
          :day day}
-        ;; :paginate true}
         (if page {:page page} nil)
         (if per  {:per per} nil)))))

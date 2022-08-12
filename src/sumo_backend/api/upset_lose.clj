@@ -1,4 +1,4 @@
-(ns sumo-backend.api.upset-loose
+(ns sumo-backend.api.upset-lose
   (:require
     [ring.util.response :refer [response]]
     [sumo-backend.data.bout :refer [get-bout-list]]))
@@ -7,16 +7,8 @@
 ;; get all bouts where :rikishi was upset (lost to lower ranked opponent)
 (defn handler
   [rikishi
-   rank_delta
-   matchup
-   technique
-   technique_category
-   is_playoff
-   year
-   month
-   day
-   page
-   per]
+   {:strs [rank_delta matchup technique technique_category is_playoff year
+           month day page per]}]
   (response
     (get-bout-list
       (merge
@@ -28,7 +20,6 @@
          :year year
          :month month
          :day day}
-        ;; :paginate true}
         (when (= matchup "includes_larger")
           {:comparison ">="})
         (when (= matchup "larger_only")

@@ -12,7 +12,7 @@
 ;; found in database, else returns them for
 ;; specified :year, :month, :day
 (defn handler
-  [year month day page per]
+  [{:strs [year month day page per]}]
   (response
     (paginate-list
       (merge

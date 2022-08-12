@@ -7,16 +7,8 @@
 ;; all bouts.
 ;; e.g. /bout/list?year=2021&winner=endo
 (defn handler
-  [winner
-   loser
-   technique
-   technique_category
-   is_playoff
-   year
-   month
-   day
-   page
-   per]
+  [{:strs [winner loser technique technique_category is_playoff year month
+           day page per]}]
   (response
     (get-bout-list
       (merge

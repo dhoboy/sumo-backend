@@ -7,7 +7,7 @@
 
 ;; list of all categories and technique keys classified within
 (defn handler
-  [page per]
+  [{:strs [page per]}]
   (response
     (paginate-list
       (merge

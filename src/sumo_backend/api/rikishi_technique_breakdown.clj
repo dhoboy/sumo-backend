@@ -11,7 +11,7 @@
 ;; TODO -- add in groups of wins / losses occuring at each rank?
 ;; basic stats on techniques and categories rikishi wins / looses by
 (defn handler
-  [name year month day page per]
+  [name {:strs [year month day page per]}]
   (response
     (paginate-list
       (merge

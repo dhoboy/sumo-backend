@@ -8,7 +8,7 @@
 ;; TODO -- add tournament champion and location.
 ;; details about tournament, e.g. rikishi records
 (defn handler
-  [year month page per]
+  [year month {:strs [page per]}]
   (response
     (paginate-list
       (merge

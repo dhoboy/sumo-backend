@@ -7,7 +7,7 @@
 
 ;; list of rikishi tournament results over time
 (defn handler
-  [name page per]
+  [name {:strs [page per]}]
   (response
     (paginate-list
       (merge

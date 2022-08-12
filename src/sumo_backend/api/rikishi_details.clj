@@ -7,7 +7,7 @@
 
 ;; specific rikishi record
 (defn handler
-  [name page per]
+  [name {:strs [page per]}]
   (response
     (paginate-list
       (merge

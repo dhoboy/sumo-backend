@@ -13,16 +13,8 @@
 (defn handler
   [rikishi
    against_rank
-   at_rank
-   matchup
-   technique
-   technique_category
-   is_playoff
-   year
-   month
-   day
-   page
-   per]
+   {:strs [at_rank matchup technique technique_category is_playoff year month
+           day page per]}]
   (response
     (get-bout-list
       (merge

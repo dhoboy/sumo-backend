@@ -9,7 +9,7 @@
 ;; list of all rikishi
 
 (defn handler
-  [page per]
+  [{:strs [page per]}]
   (response
     (paginate-list
       (merge

@@ -7,16 +7,8 @@
 ;; get all upsets that :rikishi won (defeated higher ranked opponent)
 (defn handler
   [rikishi
-   rank_delta
-   matchup
-   technique
-   technique_category
-   is_playoff
-   year
-   month
-   day
-   page
-   per]
+   {:strs [rank_delta matchup technique technique_category is_playoff year
+           month day page per]}]
   (response
     (get-bout-list
       (merge
@@ -28,7 +20,6 @@
          :year year
          :month month
          :day day}
-        ;; :paginate true}
         (when (= matchup "includes_larger")
           {:comparison ">="})
         (when (= matchup "larger_only")

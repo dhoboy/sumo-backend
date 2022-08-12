@@ -12,17 +12,8 @@
 ;; e.g. /bout/list/endo?rank=maegashira_1&year=2020&month=1&day=1&per=1&page=1
 (defn handler
   [rikishi
-   winner
-   loser
-   technique
-   technique_category
-   rank
-   is_playoff
-   year
-   month
-   day
-   page
-   per]
+   {:strs [winner loser technique technique_category rank is_playoff year month
+           day page per]}]
   (response
     (get-bout-list
       (merge
@@ -36,6 +27,5 @@
          :year year
          :month month
          :day day}
-        ;; :paginate true}
         (if page {:page page} nil)
         (if per  {:per per} nil)))))

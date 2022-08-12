@@ -9,22 +9,15 @@
 (defn handler
   [rikishi
    against_rank
-   at_rank
-   matchup
-   technique
-   technique_category
-   is_playoff
-   year
-   month
-   day
-   page
-   per]
+   {:strs [at_rank matchup technique technique_category is_playoff year month
+           day page per]}]
   (response
     (get-bout-list
       (merge
         {:rikishi rikishi
          :against-rank (rank-keyword-to-str against_rank)
-         :against-rank-value (get-rank-value {:rank against_rank :year year :month month})
+         :against-rank-value (get-rank-value
+                               {:rank against_rank :year year :month month})
          :at-rank (rank-keyword-to-str at_rank)
          :winner rikishi
          :technique technique
@@ -33,7 +26,7 @@
          :year year
          :month month
          :day day}
-        ;; :paginate true}
+        ;; higher ranks have lower rank-value
         (when (= matchup "includes_higher_ranks")
           {:comparison "<="})
         (when (= matchup "higher_ranks_only")

@@ -9,7 +9,7 @@
 ;; rikishi wins and losses by a certain technique
 ;; takes optional :year :month :day params
 (defn handler
-  [technique year month day page per]
+  [technique {:strs [year month day page per]}]
   (response
     (paginate-list
       (merge

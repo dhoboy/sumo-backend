@@ -7,7 +7,7 @@
 
 ;; list of all tournaments data exists for
 (defn handler
-  [page per]
+  [{:strs [page per]}]
   (response
     (paginate-list
       (merge

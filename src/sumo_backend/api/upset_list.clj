@@ -8,16 +8,8 @@
 ;; e.g. /upset/list?rank_delta=10&matchup=includes_larger&technique_category=push
 ;; - "give me all upsets of 10 rank levels or higher where the technique category was push"
 (defn handler
-  [rank_delta
-   matchup
-   technique
-   technique_category
-   is_playoff
-   year
-   month
-   day
-   page
-   per]
+  [{:strs [rank_delta matchup technique technique_category is_playoff year
+           month day page per]}]
   (response
     (get-bout-list
       (merge
@@ -28,7 +20,6 @@
          :year year
          :month month
          :day day}
-        ;; :paginate true}
         (when (= matchup "includes_larger")
           {:comparison ">="})
         (when (= matchup "larger_only")

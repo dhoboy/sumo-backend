@@ -8,7 +8,7 @@
 ;; rikishi current rank
 ;; current rank is rank in last basho rikishi competed in
 (defn handler
-  [name page per]
+  [name {:strs [page per]}]
   (response
     (paginate-list
       (merge

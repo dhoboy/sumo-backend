@@ -19,6 +19,7 @@
                  [jumblerg/ring-cors "2.0.0"]]
   :plugins [[lein-ring "0.12.5"]]
   :ring {:handler sumo-backend.routes/app :port 3005}
-  :profiles
-  {:dev {:dependencies [[javax.servlet/servlet-api "2.5"]
-                        [ring/ring-mock "0.3.2"]]}})
+  :profiles {:dev {:dependencies [[javax.servlet/servlet-api "2.5"]
+                                  [ring/ring-mock "0.3.2"]
+                                  [lambdaisland/kaocha "1.69.1069"]]}}
+  :aliases {"kaocha" ["run" "-m" "kaocha.runner"]})

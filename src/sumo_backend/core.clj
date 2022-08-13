@@ -3,7 +3,8 @@
     [clojure.core.async :as async :refer [>!!]]
     [sumo-backend.data.database :as db]
     [sumo-backend.data.fetch_and_format :refer [fetch-chan start-data-pipeline
-                                                write-tournament-rank-values]]
+                                                write-tournament-rank-values
+                                                read-basho-file read-basho-dir]]
     [sumo-backend.utils :as utils]))
 
 
@@ -101,12 +102,12 @@
         file-count   (count all-files)]
     (cond
       (= file-count 1) (->> all-files
-                         (map db/read-basho-file)
+                         (map read-basho-file)
                          doall ; returns value so tournament-rank-values can be written
                          (map write-tournament-rank-values)
                          dorun) ; make this map run
       (> file-count 1) (->> all-files
-                         (db/read-basho-dir) ; returns a doall
+                         (read-basho-dir) ; returns a doall
                          (filter some?)
                          (into #{})
                          (map write-tournament-rank-values)

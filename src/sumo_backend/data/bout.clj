@@ -215,12 +215,21 @@
 (defn get-bout-list
   "given a set of criteria, returns a bout list.
    pass { :paginate true } to get the response paginated.
-   also takes :page and :per string params to step through response pages"
-  [{:keys [paginate page per] :or {page "1" per "15"} :as params}]
+   also takes :page and :per string params to step through response pages.
+   if you pass { :paginate true } without :page and :per, you get everything
+   on one page with the :total key returned"
+  [{:keys [paginate page per] :as params}]
   (if paginate
-    {:pagination
-     {:page (Integer/parseInt page)
-      :per (Integer/parseInt per)
-      :total (:total (first (run-bout-list-query (merge {:total-only true} params))))}
-     :items (run-bout-list-query (merge {:page page :per per} params))}
+    {:pagination (merge
+                   {:total (:total
+                             (first
+                               (run-bout-list-query
+                                 (merge {:total-only true} params))))}
+                   (when page {:page (Integer/parseInt page)})
+                   (when per {:per (Integer/parseInt per)}))
+     :items (run-bout-list-query
+              (merge
+                (when page {:page page})
+                (when per {:per per})
+                params))}
     (run-bout-list-query params)))

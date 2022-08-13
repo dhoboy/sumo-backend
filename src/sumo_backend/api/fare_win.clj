@@ -25,7 +25,8 @@
          :is-playoff is_playoff
          :year year
          :month month
-         :day day}
+         :day day
+         :paginate true}
         ;; higher ranks have lower rank-value
         (when (= matchup "includes_higher_ranks")
           {:comparison "<="})

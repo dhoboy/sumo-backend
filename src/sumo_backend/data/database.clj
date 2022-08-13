@@ -30,7 +30,7 @@
     #_{:clj-kondo/ignore [:unresolved-symbol]} ; clj-kondo doesn't like the when-let-all
     (when-let-all [db-keys (:local (parse-string (slurp key-file) true))
                    conn (c3p0/make-datasource-spec
-                          {:classname "com.mysql.jdbc.Driver"
+                          {:classname "com.mysql.cj.jdbc.Driver" ; "com.mysql.jdbc.Driver"
                            :subprotocol "mysql"
                            :initial-pool-size 3
                            :subname "//127.0.0.1:3306/sumo?characterEncoding=utf8"

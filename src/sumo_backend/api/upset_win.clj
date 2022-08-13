@@ -19,7 +19,8 @@
          :is-playoff is_playoff
          :year year
          :month month
-         :day day}
+         :day day
+         :paginate true}
         (when (= matchup "includes_larger")
           {:comparison ">="})
         (when (= matchup "larger_only")

@@ -69,8 +69,14 @@
 
 ;;
 ;; Database Queries
+;;  -- TODO: Is there a better way to handle required params in these functions?
+;;  -- I like that you call functions this way: (get-db-info {:category "push"})
+;;  -- So i dont want to change it to (get-db-info "push" {:optional_params}) here
+;;  -- And preconditions throw AssertionErrors, I dont want that.
 ;;
 
+;; TODO: Should this return the passed in year/month/day in the response?
+;; TODO: Does this need to take an empty map if you want all techniques?
 (defn list-techniques
   "list all techniques used in bouts optionally constrained
    to passed in year, month, day params"
@@ -96,196 +102,208 @@
 
 ;; wins / losses for rikishi with technique
 (defn get-rikishi-wins-by-technique
-  "returns techniques rikishi has won by and frequency"
+  "returns techniques rikishi has won by and frequency.
+  rikishi is required."
   [{:keys [rikishi year month day]}]
-  (if-let [conn (db/db-conn)]
-    (jdbc/query
-      conn
-      (sql/format
-        (sql/build
-          :select [:technique :technique_en :technique_category [:%count.technique :count]]
-          :modifiers [:distinct]
-          :from :bout
-          :where
-          (concat
-            [:and]
-            [[:= :winner rikishi]]
-            (when year [[:= :year year]])
-            (when month [[:= :month month]])
-            (when day [[:= :day day]]))
-          :group-by [:technique :technique_en :technique_category]
-          :order-by [[:%count.technique :desc]])))
-    (println "No Mysql DB")))
-
-
-(comment
-  (println (get-rikishi-wins-by-technique {:rikishi "ENDO"})))
+  (if (nil? rikishi)
+    '()
+    (if-let [conn (db/db-conn)]
+      (jdbc/query
+        conn
+        (sql/format
+          (sql/build
+            :select [:technique :technique_en :technique_category [:%count.technique :count]]
+            :modifiers [:distinct]
+            :from :bout
+            :where
+            (concat
+              [:and]
+              [[:= :winner rikishi]]
+              (when year [[:= :year year]])
+              (when month [[:= :month month]])
+              (when day [[:= :day day]]))
+            :group-by [:technique :technique_en :technique_category]
+            :order-by [[:%count.technique :desc]])))
+      (println "No Mysql DB"))))
 
 
 (defn get-rikishi-wins-by-technique-category
-  "returns technique categories rikishi has won by and frequency"
+  "returns technique categories rikishi has won by and frequency.
+   rikishi is required."
   [{:keys [rikishi year month day]}]
-  (if-let [conn (db/db-conn)]
-    (jdbc/query
-      conn
-      (sql/format
-        (sql/build
-          :select [:technique_category [:%count.technique_category :count]]
-          :modifiers [:distinct]
-          :from :bout
-          :where
-          (concat
-            [:and]
-            [[:= :winner rikishi]]
-            (when year [[:= :year year]])
-            (when month [[:= :month month]])
-            (when day [[:= :day day]]))
-          :group-by :technique_category
-          :order-by [[:%count.technique_category :desc]])))
-    (println "No Mysql DB")))
-
-
-(comment
-  (println (get-rikishi-wins-by-technique-category {:rikishi "ENDO"})))
+  (if (nil? rikishi)
+    '()
+    (if-let [conn (db/db-conn)]
+      (jdbc/query
+        conn
+        (sql/format
+          (sql/build
+            :select [:technique_category [:%count.technique_category :count]]
+            :modifiers [:distinct]
+            :from :bout
+            :where
+            (concat
+              [:and]
+              [[:= :winner rikishi]]
+              (when year [[:= :year year]])
+              (when month [[:= :month month]])
+              (when day [[:= :day day]]))
+            :group-by :technique_category
+            :order-by [[:%count.technique_category :desc]])))
+      (println "No Mysql DB"))))
 
 
 (defn get-rikishi-losses-to-technique
-  "returns techniques rikishi has lost to and frequency"
+  "returns techniques rikishi has lost to and frequency.
+   rikishi is required."
   [{:keys [rikishi year month day]}]
-  (if-let [conn (db/db-conn)]
-    (jdbc/query
-      conn
-      (sql/format
-        (sql/build
-          :select [:technique :technique_en :technique_category [:%count.technique :count]]
-          :modifiers [:distinct]
-          :from :bout
-          :where
-          (concat
-            [:and]
-            [[:= :loser rikishi]]
-            (when year [[:= :year year]])
-            (when month [[:= :month month]])
-            (when day [[:= :day day]]))
-          :group-by [:technique :technique_en :technique_category]
-          :order-by [[:%count.technique :desc]])))
-    (println "No Mysql DB")))
-
-
-(comment
-  (println (get-rikishi-losses-to-technique {:rikishi "ENDO"})))
+  (if (nil? rikishi)
+    '()
+    (if-let [conn (db/db-conn)]
+      (jdbc/query
+        conn
+        (sql/format
+          (sql/build
+            :select [:technique :technique_en :technique_category [:%count.technique :count]]
+            :modifiers [:distinct]
+            :from :bout
+            :where
+            (concat
+              [:and]
+              [[:= :loser rikishi]]
+              (when year [[:= :year year]])
+              (when month [[:= :month month]])
+              (when day [[:= :day day]]))
+            :group-by [:technique :technique_en :technique_category]
+            :order-by [[:%count.technique :desc]])))
+      (println "No Mysql DB"))))
 
 
 (defn get-rikishi-losses-to-technique-category
-  "returns technique categories rikishi has lost to and frequency"
+  "returns technique categories rikishi has lost to and frequency.
+   rikishi is required."
   [{:keys [rikishi year month day]}]
-  (if-let [conn (db/db-conn)]
-    (jdbc/query
-      conn
-      (sql/format
-        (sql/build
-          :select [:technique_category [:%count.technique_category :count]]
-          :modifiers [:distinct]
-          :from :bout
-          :where
-          (concat
-            [:and]
-            [[:= :loser rikishi]]
-            (when year [[:= :year year]])
-            (when month [[:= :month month]])
-            (when day [[:= :day day]]))
-          :group-by :technique_category
-          :order-by [[:%count.technique_category :desc]])))
-    (println "No Mysql DB")))
+  (if (nil? rikishi)
+    '()
+    (if-let [conn (db/db-conn)]
+      (jdbc/query
+        conn
+        (sql/format
+          (sql/build
+            :select [:technique_category [:%count.technique_category :count]]
+            :modifiers [:distinct]
+            :from :bout
+            :where
+            (concat
+              [:and]
+              [[:= :loser rikishi]]
+              (when year [[:= :year year]])
+              (when month [[:= :month month]])
+              (when day [[:= :day day]]))
+            :group-by :technique_category
+            :order-by [[:%count.technique_category :desc]])))
+      (println "No Mysql DB"))))
 
 
 ;; all wins / losses for technique
 (defn get-all-wins-by-technique
-  "returns rikishi and number of times they have won with technique"
+  "returns rikishi and number of times they have won with technique.
+   technique is required."
   [{:keys [technique year month day]}]
-  (if-let [conn (db/db-conn)]
-    (jdbc/query
-      conn
-      (sql/format
-        (sql/build
-          :select [:winner [:%count.winner :count]]
-          :from :bout
-          :where
-          (concat
-            [:and]
-            [[:= :technique technique]]
-            (when year [[:= :year year]])
-            (when month [[:= :month month]])
-            (when day [[:= :day day]]))
-          :group-by :winner
-          :order-by [[:%count.winner :desc]])))
-    (println "No Mysql DB")))
+  (if (nil? technique)
+    '()
+    (if-let [conn (db/db-conn)]
+      (jdbc/query
+        conn
+        (sql/format
+          (sql/build
+            :select [:winner [:%count.winner :count]]
+            :from :bout
+            :where
+            (concat
+              [:and]
+              [[:= :technique technique]]
+              (when year [[:= :year year]])
+              (when month [[:= :month month]])
+              (when day [[:= :day day]]))
+            :group-by :winner
+            :order-by [[:%count.winner :desc]])))
+      (println "No Mysql DB"))))
 
 
 (defn get-all-wins-by-technique-category
-  "returns rikishi and number of times they have won with technique category"
+  "returns rikishi and number of times they have won with technique category.
+   category is required."
   [{:keys [category year month day]}]
-  (if-let [conn (db/db-conn)]
-    (jdbc/query
-      conn
-      (sql/format
-        (sql/build
-          :select [:winner [:%count.winner :count]]
-          :from :bout
-          :where
-          (concat
-            [:and]
-            [[:= :technique_category category]]
-            (when year [[:= :year year]])
-            (when month [[:= :month month]])
-            (when day [[:= :day day]]))
-          :group-by :winner
-          :order-by [[:%count.winner :desc]])))
-    (println "No Mysql DB")))
+  (if (nil? category)
+    '()
+    (if-let [conn (db/db-conn)]
+      (jdbc/query
+        conn
+        (sql/format
+          (sql/build
+            :select [:winner [:%count.winner :count]]
+            :from :bout
+            :where
+            (concat
+              [:and]
+              [[:= :technique_category category]]
+              (when year [[:= :year year]])
+              (when month [[:= :month month]])
+              (when day [[:= :day day]]))
+            :group-by :winner
+            :order-by [[:%count.winner :desc]])))
+      (println "No Mysql DB"))))
 
 
 (defn get-all-losses-to-technique
-  "returns rikishi and number of times they have lost to technique"
+  "returns rikishi and number of times they have lost to technique.
+   technique is required."
   [{:keys [technique year month day]}]
-  (if-let [conn (db/db-conn)]
-    (jdbc/query
-      conn
-      (sql/format
-        (sql/build
-          :select [:loser [:%count.loser :count]]
-          :from :bout
-          :where
-          (concat
-            [:and]
-            [[:= :technique technique]]
-            (when year [[:= :year year]])
-            (when month [[:= :month month]])
-            (when day [[:= :day day]]))
-          :group-by :loser
-          :order-by [[:%count.loser :desc]])))
-    (println "No Mysql DB")))
+  (if (nil? technique)
+    '()
+    (if-let [conn (db/db-conn)]
+      (jdbc/query
+        conn
+        (sql/format
+          (sql/build
+            :select [:loser [:%count.loser :count]]
+            :from :bout
+            :where
+            (concat
+              [:and]
+              [[:= :technique technique]]
+              (when year [[:= :year year]])
+              (when month [[:= :month month]])
+              (when day [[:= :day day]]))
+            :group-by :loser
+            :order-by [[:%count.loser :desc]])))
+      (println "No Mysql DB"))))
 
 
 (defn get-all-losses-to-technique-category
-  "returns rikishi and number of times they have lost to technique category"
+  "returns rikishi and number of times they have lost to technique category.
+   category is required."
   [{:keys [category year month day]}]
-  (if-let [conn (db/db-conn)]
-    (jdbc/query
-      conn
-      (sql/format
-        (sql/build
-          :select [:loser [:%count.loser :count]]
-          :from :bout
-          :where
-          (concat
-            [:and]
-            [[:= :technique_category category]]
-            (when year [[:= :year year]])
-            (when month [[:= :month month]])
-            (when day [[:= :day day]]))
-          :group-by :loser
-          :order-by [[:%count.loser :desc]])))
-    (println "No Mysql DB")))
+  (if (nil? category)
+    '()
+    (if-let [conn (db/db-conn)]
+      (jdbc/query
+        conn
+        (sql/format
+          (sql/build
+            :select [:loser [:%count.loser :count]]
+            :from :bout
+            :where
+            (concat
+              [:and]
+              [[:= :technique_category category]]
+              (when year [[:= :year year]])
+              (when month [[:= :month month]])
+              (when day [[:= :day day]]))
+            :group-by :loser
+            :order-by [[:%count.loser :desc]])))
+      (println "No Mysql DB"))))
 
 
 ;; not sure if this is needed, leaving for now

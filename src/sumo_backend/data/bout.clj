@@ -233,3 +233,13 @@
                 (when per {:per per})
                 params))}
     (run-bout-list-query params)))
+
+
+(comment
+  (println (get-bout-list {:rikishi "ENDO" :rank "Maegashira #1" :page "1" :per "10"})))
+
+
+(comment
+  (println
+    (get-bout-list
+      {:rikishi "ENDO" :against-rank "OZEKI" :against-rank-value 2 :comparison "<"})))

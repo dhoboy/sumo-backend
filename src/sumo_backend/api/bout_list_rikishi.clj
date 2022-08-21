@@ -30,3 +30,7 @@
          :paginate true}
         (if page {:page page} nil)
         (if per  {:per per} nil)))))
+
+
+(comment
+  (get-bout-list {:rikishi "ENDO" :rank "Maegashira #1" :page "1" :per "10"}))

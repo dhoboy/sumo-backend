@@ -12,6 +12,7 @@
     (is (= nil (utils/in? "str" false))
       "Returns nil on nonsense input"))
 
+
   (testing "paginate-list"
     (is (=
           {:pagination {:page 1 :per 15 :total 3} :items '(1 2 3)}
@@ -26,12 +27,6 @@
           (utils/paginate-list {:item-list [1 2 3] :all true}))
       "Returns list unpaginated with {:all true} param"))
 
-  (testing "get-bout-opponent"
-    (is (=
-          "Sam"
-          (utils/get-bout-opponent
-            {:bout {:east "Bob" :west "Sam"} :rikishi "BoB"}))
-      "Returns bout opponent; case irrevelent"))
 
   (testing "get-date"
     (is (=
@@ -47,11 +42,13 @@
           (utils/get-date "day1_3_____2021.json"))
       "Parses date out of filename with random underscores"))
 
+
   (testing "str->keyword"
     (is (=
           :sumo
           (utils/str->keyword "sumo"))
       "Translates arbitrary string into keyword"))
+
 
   (testing "zero-pad"
     (is (=
@@ -82,6 +79,7 @@
           nil
           (utils/zero-pad "not a number")))
     "Returns nil for non-numeric string")
+
 
   (testing "add-percent-to-list"
     (is (=

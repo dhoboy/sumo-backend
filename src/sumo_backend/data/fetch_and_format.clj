@@ -9,13 +9,18 @@
     [clojure.string :as str]
     [honeysql.core :as sql]
     [simple-time.core :as time]
-    [sumo-backend.data.database :as db]
     [sumo-backend.data.bout :refer [get-bout-list]]
+    [sumo-backend.data.database :refer [db-conn]]
     [sumo-backend.data.rikishi :refer [rikishi-exists?]]
     [sumo-backend.data.technique :refer [get-category]]
     [sumo-backend.data.tournament :refer [rank-str-to-keyword
-                                          tournament-rank-values]]
-    [sumo-backend.utils :as utils]))
+                                          tournament-rank-values
+                                          get-bout-loser
+                                          get-bout-winner]]
+    [sumo-backend.utils :refer [default-data-dir
+                                get-date
+                                path->obj
+                                zero-pad]]))
 
 
 ;;
@@ -66,7 +71,7 @@
     (count
       (filter
         #(.isFile %)
-        (utils/path->obj technique-info-filepath)))
+        (path->obj technique-info-filepath)))
     0))
 
 
@@ -216,8 +221,8 @@
   [{:keys [func dir]}]
   (if (nil? func)
     (println "Must pass a function :func to update-basho-dir")
-    (let [custom-path  (utils/path->obj dir)
-          default-path (utils/path->obj utils/default-data-dir)
+    (let [custom-path  (path->obj dir)
+          default-path (path->obj default-data-dir)
           all-files    (->> (or custom-path default-path)
                          (filter #(.isFile %))
                          (map str)
@@ -228,7 +233,7 @@
       (if (> file-count 0)
         (dorun
           (map func all-files))
-        (println (str "File: '" (or dir utils/default-data-dir) "' not found"))))))
+        (println (str "File: '" (or dir default-data-dir) "' not found"))))))
 
 
 ;;
@@ -293,7 +298,7 @@
   (str
     "https://www3.nhk.or.jp/nhkworld/en/tv/sumo/tournament/"
     year
-    (utils/zero-pad month)
+    (zero-pad month)
     "/day"
     day
     ".json"))
@@ -372,7 +377,7 @@
   "for the passed in :year, :month, and :day
    generate the filename where this data will be written"
   [{:keys [year month day]}]
-  (str "day" day "__" (utils/zero-pad month) "_" year ".json"))
+  (str "day" day "__" (zero-pad month) "_" year ".json"))
 
 
 ;; job
@@ -381,7 +386,7 @@
   []
   (go-loop [document (<! write-chan)]
     (let [{:keys [year month] :as date} (meta document)
-          filedir (str utils/default-data-dir "/" year "/" (utils/zero-pad month) "/")
+          filedir (str default-data-dir "/" year "/" (zero-pad month) "/")
           filename (get-new-bout-data-filename date)]
       (when (not (.exists (io/file filedir)))
         (.mkdir (io/file filedir)))
@@ -458,7 +463,7 @@
    shouldn't have more than 15 days for any tournament,
    but for completeness >= 15 days is full tournament"
   [{:keys [year month]}]
-  (if-let [conn (db/db-conn)]
+  (if-let [conn (db-conn)]
     (let [bout-days (jdbc/query
                       conn
                       (sql/format
@@ -481,7 +486,7 @@
 (defn write-rikishi
   "write rikishi info to the database"
   [rikishi]
-  (if-let [conn (db/db-conn)]
+  (if-let [conn (db-conn)]
     (jdbc/insert-multi!
       conn
       :rikishi
@@ -494,7 +499,7 @@
 (defn write-bout
   "write a bout's information to the database"
   [{:keys [east west is_playoff technique_en technique technique_category date]}]
-  (if-let [conn (db/db-conn)]
+  (if-let [conn (db-conn)]
     (jdbc/insert-multi!
       conn
       :bout
@@ -502,8 +507,8 @@
         :east_rank (:rank east)
         :west (:name west)
         :west_rank (:rank west)
-        :winner (utils/get-bout-winner east west)
-        :loser (utils/get-bout-loser east west)
+        :winner (get-bout-winner east west)
+        :loser (get-bout-loser east west)
         :is_playoff is_playoff
         :technique technique
         :technique_en technique_en
@@ -518,7 +523,7 @@
   "writes list of fields to bout with passed in id
    fields ex: '([:west_rank_value 16] [:east_rank_value 17])"
   [id & update-fields]
-  (if-let [conn (db/db-conn)]
+  (if-let [conn (db-conn)]
     (dorun
       (map
         (fn [[field value]]
@@ -561,7 +566,7 @@
   [filepath]
   (println "reading filepath:" filepath)
   (let [data (parse-string (slurp filepath) true)
-        date (utils/get-date filepath)]
+        date (get-date filepath)]
     (dorun ; usually what you need is dorun, doall returns results of map, dorun forces the lazy map to execute
       (map
         (fn [{:keys [east west] :as record}]
@@ -585,7 +590,7 @@
   (doall
     (map
       (fn [filepath]
-        (let [date (utils/get-date filepath)]
+        (let [date (get-date filepath)]
           (when (not (full-tournament-data-exists? date))
             (read-basho-file filepath))))
       all-files)))

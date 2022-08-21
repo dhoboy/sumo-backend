@@ -49,12 +49,14 @@
   "true if data exists for
    passed in rikishi string, false otherwise"
   [rikishi]
-  (let [rikishi-names (map #(get % :name) (list-rikishi))]
-    (if (utils/in?
-          rikishi-names
-          (str/upper-case rikishi))
-      true
-      false)))
+  (if (nil? rikishi)
+    false
+    (let [rikishi-names (map #(get % :name) (list-rikishi))]
+      (if (utils/in?
+            rikishi-names
+            (str/upper-case rikishi))
+        true
+        false))))
 
 
 (comment

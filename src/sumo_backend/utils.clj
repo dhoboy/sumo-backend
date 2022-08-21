@@ -34,36 +34,6 @@
        :items (take per (drop (* (- page 1) per) item-list))})))
 
 
-;; Get a Rikishi's opponent from a bout
-(defn get-bout-opponent
-  "for a given rikishi and bout
-   return the bout opponent name string"
-  [{:keys [rikishi bout]}]
-  (or
-    (and
-      (= (str/upper-case (:east bout)) (str/upper-case rikishi)) (:west bout))
-    (and
-      (= (str/upper-case (:west bout)) (str/upper-case rikishi)) (:east bout))))
-
-
-;; Get the winner from a given pair of east and west maps
-(defn get-bout-winner
-  "determines winner for passed in east and west records"
-  [east west]
-  (if (= (:result east) "win")
-    (:name east)
-    (:name west)))
-
-
-;; Get the looser from a given pair of east and west maps
-(defn get-bout-loser
-  "determines loser for passed in east and west records"
-  [east west]
-  (if (= (:result east) "win")
-    (:name west)
-    (:name east)))
-
-
 ;; Get the date from a filepath
 (defn get-date
   "takes in a filepath and parses out the date.

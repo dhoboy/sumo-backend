@@ -1,5 +1,6 @@
 (ns sumo-backend.data.tournament-test
   (:require
+    [clojure.string :as str]
     [clojure.test :refer [deftest is testing]]
     [sumo-backend.data.tournament :as tt]))
 
@@ -314,6 +315,35 @@
             nil
             (tt/get-rank-value-in-bout {}))
         "Returns nil if required :rikishi and :bout params are not passed in")))
+
+  (testing "get-opponent-rank-string-in-bout"
+    (let [bout {:technique_en "Slap down"
+                :day 6
+                :west_rank_value 1
+                :west "KAKURYU"
+                :winner "KAKURYU"
+                :east_rank "Maegashira #3"
+                :loser "SHODAI"
+                :month 3
+                :is_playoff nil
+                :east_rank_value 7
+                :east "SHODAI"
+                :year 2019
+                :technique "Hatakikomi"
+                :id 1
+                :west_rank "Yokozuna"
+                :technique_category "dodge"}]
+
+      (is (=
+            "yokozuna"
+            (str/lower-case
+              (tt/get-opponent-rank-string-in-bout {:rikishi "Shodai" :bout bout})))
+        "Returns expected opponent rank value in bout map")
+
+      (is (=
+            nil
+            (tt/get-opponent-rank-string-in-bout {:rikishi "" :bout bout}))
+        "Returns nil for invalid rikishi in bout")))
 
 
   (testing "get-rank-string-in-tournament"

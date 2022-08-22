@@ -471,7 +471,6 @@
 ;;
 ;; Get Opponent's rank string from a bout
 ;;
-;; FYI: Not used, add testing when this function is needed
 (defn get-opponent-rank-string-in-bout
   "given a rikishi and bout, return
    rikishi opponent's rank value"

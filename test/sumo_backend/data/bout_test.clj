@@ -126,6 +126,20 @@
                 resp)))
         "When passed :rikishi and :rank parameters, every bout returned has that rikishi at that rank")))
 
+  (testing ":at-rank parameter"
+    (let [resp (get-bout-list {:rikishi rikishi :at-rank "Komusubi" :against-rank "Ozeki"})]
+      (is (=
+            (count resp)
+            (count
+              (filter
+                #(=
+                   "komusubi"
+                   (str/trim
+                     (str/lower-case
+                       (get-rank-string-in-bout {:rikishi rikishi :bout %}))))
+                resp)))
+        "When passed :at-rank parameter, every bout returned has rikishi at that rank")))
+
 
   (testing ":opponent and :opponent-rank parameters"
     (let [resp (get-bout-list
@@ -241,7 +255,17 @@
                 (count resp)
                 (count (filter #(not= "yokozuna" %) opponent-ranks)))
               (some #(= "ozeki" (str/lower-case %)) opponent-ranks)))
-        "Bouts against >= ozeki are not against yokozuna, but can be against ozeki"))))
+        "Bouts against >= ozeki are not against yokozuna, but can be against ozeki")))
 
 
-;; TODO: test :at-rank and :rank-delta params then this is finished
+  (testing ":rank-delta parameter"
+    (let [resp (get-bout-list {:winner rikishi :rank-delta 1})]
+      (is (=
+            (count resp)
+            (count
+              (filter
+                #(=
+                   1
+                   (Math/abs (- (:east_rank_value %) (:west_rank_value %))))
+                resp)))
+        "Bouts where rikishi won and the difference between his and opponents rank level was 1"))))

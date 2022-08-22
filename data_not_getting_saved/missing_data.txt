@@ -4,3 +4,15 @@ nhk.
 for some reason, my download code only downloads the first 13 days of a basho,
 it never downloads days 14 or 15, even if their files are on nhk. will look
 into this
+
+-- seems to be the function that starts the channels code returns before days 14
+and 15 can finish, and the attempt to keep the channels referenced by something
+with the
+(swap!
+    jobs
+    merge
+    {:fetch (fetch-data)
+     :update (update-data)
+     :write (write-data)})
+
+in (start-data-pipeline is doing nothing

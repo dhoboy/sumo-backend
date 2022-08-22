@@ -1,4 +1,4 @@
- {:linters {:unused-namespace
+{:linters {:unused-namespace
            {:exclude [clj-kondo.impl.rewrite-clj-patch
                       rewrite-clj.parser.core
                       clj-kondo.impl.var-info-gen
@@ -16,11 +16,11 @@
                              run! {:arities {1 {:args [:map]
                                                 :ret :map}}}}
              clj-kondo.impl.config #include "../src/clj_kondo/impl/config.types.edn"
-             clj-kondo.impl.findings #include "../src/clj_kondo/impl/findings.types.edn"
-             }}
+             clj-kondo.impl.findings #include "../src/clj_kondo/impl/findings.types.edn"}}
            :reduce-without-init {:level :warning}
            :missing-docstring {:level :off}
-           :unsorted-required-namespaces {:level :warning}}
+           :unresolved-var {:level :off}
+           :unsorted-required-namespaces {:level :off}}
  :lint-as {me.raynes.conch/programs clojure.core/declare
            me.raynes.conch/let-programs clojure.core/let
            datalog.parser.type/deftrecord clojure.core/defrecord
@@ -35,4 +35,4 @@
  :auto-load-configs false
  :ns-groups [{:pattern ".*-test"
               :name test-namespaces}]
- :config-in-ns {test-namespaces {:linters {:warn-on-reflection {:level :off}}}}
+ :config-in-ns {test-namespaces {:linters {:warn-on-reflection {:level :off}}}}}

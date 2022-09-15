@@ -429,7 +429,7 @@
           entry (first resp)]
 
       (is (=
-            '(:rank :tournament)
+            '(:rank :tournament :rank_value)
             (keys entry))
         "Returns a list of maps with :rank and :tournament keys")
 

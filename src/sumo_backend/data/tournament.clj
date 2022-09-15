@@ -546,6 +546,41 @@
 
 (defn get-rikishi-rank-over-time
   "returns rikishi rank over time, from as far back as data exists.
+   nil's represent tournaments rikishi did not compete in"
+  ([{:keys [rikishi]}] ; top-level
+   (if (rikishi-exists? rikishi)
+     (get-rikishi-rank-over-time
+       (str/upper-case rikishi)
+       (reverse (list-tournaments))
+       [])
+     {:error (str "Data does not exist for rikishi " rikishi)}))
+  ([rikishi [tournament & rest] rank-over-time] ; inner function
+   (if (empty? tournament)
+     rank-over-time ; checked every tournament, return what you've got
+     (let [rank (get-rank-string-in-tournament
+                  rikishi
+                  (get-bout-list
+                    {:rikishi rikishi
+                     :year (:year tournament)
+                     :month (:month tournament)}))]
+       (get-rikishi-rank-over-time
+         rikishi
+         rest
+         (conj
+           rank-over-time
+           {:rank rank
+            :tournament tournament
+            :rank_value (get-rank-value
+                          {:rank rank
+                           :year (:year tournament)
+                           :month (:month tournament)})}))))))
+
+
+;; TODO: Not sure if I want the diff only version or the above version
+;; which returns every rank, even if it didn't change from one tournament to
+;; the next.
+(defn- get-rikishi-rank-over-time-diff-only
+  "returns rikishi rank over time, from as far back as data exists.
    everytime rikishi has new rank, that is included in the list.
    nil's represent tournaments rikishi did not compete in"
   ([{:keys [rikishi]}] ; top-level
@@ -568,7 +603,14 @@
          (get-rikishi-rank-over-time
            rikishi
            rest
-           (conj rank-over-time {:rank rank :tournament tournament}))
+           (conj
+             rank-over-time
+             {:rank rank
+              :tournament tournament
+              :rank_value (get-rank-value
+                            {:rank rank
+                             :year (:year tournament)
+                             :month (:month tournament)})}))
          (get-rikishi-rank-over-time
            rikishi
            rest

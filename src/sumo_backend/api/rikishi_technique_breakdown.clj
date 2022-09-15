@@ -18,19 +18,23 @@
         {:item-list
          (conj
            []
-           {:wins-by-technique-category
+           {:wins_by_technique_category
             (add-percent-to-list
-              (get-rikishi-wins-by-technique-category
-                {:rikishi name :year year :month month :day day}))}
-           {:wins-by-technique
+              (filter
+                #(some? (:technique_category %))
+                (get-rikishi-wins-by-technique-category
+                  {:rikishi name :year year :month month :day day})))}
+           {:wins_by_technique
             (add-percent-to-list
               (get-rikishi-wins-by-technique
                 {:rikishi name :year year :month month :day day}))}
-           {:losses-to-technique-category
+           {:losses_to_technique_category
             (add-percent-to-list
-              (get-rikishi-losses-to-technique-category
-                {:rikishi name :year year :month month :day day}))}
-           {:losses-to-technique
+              (filter
+                #(some? (:technique_category %))
+                (get-rikishi-losses-to-technique-category
+                  {:rikishi name :year year :month month :day day})))}
+           {:losses_to_technique
             (add-percent-to-list
               (get-rikishi-losses-to-technique
                 {:rikishi name :year year :month month :day day}))})}
@@ -43,19 +47,27 @@
   (println
     (conj
       []
-      {:wins-by-technique-category
+      {:wins_by_technique_category
         (add-percent-to-list
           (get-rikishi-wins-by-technique-category
             {:rikishi "ENDO"}))}
-      {:wins-by-technique
+      {:wins_by_technique
         (add-percent-to-list
           (get-rikishi-wins-by-technique
             {:rikishi "ENDO"}))}
-      {:losses-to-technique-category
+      {:losses_to_technique_category
         (add-percent-to-list
           (get-rikishi-losses-to-technique-category
            {:rikishi "ENDO"}))}
-      {:losses-to-technique
+      {:losses_to_technique
         (add-percent-to-list
           (get-rikishi-losses-to-technique
             {:rikishi "ENDO"}))})))
+
+
+(comment
+  (println
+    (filter
+      #(some? (:technique_category %))
+      (get-rikishi-wins-by-technique-category
+        {:rikishi "MITAKEUMI" :year 2021 :month 5 }))))

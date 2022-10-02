@@ -89,6 +89,11 @@
     "jp" : "Okuridashi",
     "cat" : "push"
   },
+  "under arm forward body drop" : {
+    "en" : "Under arm forward body drop",
+    "jp" : "Tsutaezori",
+    "cat" : null
+  },
   "arm locking twist down" : {
     "en" : "Arm locking twist down",
     "jp" : "Kotehineri",
@@ -452,6 +457,11 @@
   "knee touch down" : {
     "en" : "Knee touch down",
     "jp" : "Tsukihiza",
+    "cat" : null
+  },
+  "tsutaezori" : {
+    "en" : "Under arm forward body drop",
+    "jp" : "Tsutaezori",
     "cat" : null
   },
   "frontal crush out" : {

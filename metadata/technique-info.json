@@ -114,6 +114,11 @@
     "jp" : "Hikiotoshi",
     "cat" : "dodge"
   },
+  "inner thigh propping twist down" : {
+    "en" : "Inner thigh propping twist down",
+    "jp" : "Uchimuso",
+    "cat" : null
+  },
   "suso-harai" : {
     "en" : "Rear foot sweep",
     "jp" : "Suso-harai",
@@ -133,6 +138,11 @@
     "en" : "Frontal force out",
     "jp" : "Yorikiri",
     "cat" : "force"
+  },
+  "kawazugake" : {
+    "en" : "Hooking backward counter throw",
+    "jp" : "Kawazugake",
+    "cat" : null
   },
   "tokkuri-nage" : {
     "en" : "2 handed head twist down",
@@ -162,6 +172,11 @@
   "the fishermans throw" : {
     "en" : "The fishermans throw",
     "jp" : "Amiuchi",
+    "cat" : null
+  },
+  "backwards belt throw" : {
+    "en" : "Backwards belt throw",
+    "jp" : "Harimanage",
     "cat" : null
   },
   "rear lifting body slam" : {
@@ -247,6 +262,16 @@
   "amiuchi" : {
     "en" : "The fishermans throw",
     "jp" : "Amiuchi",
+    "cat" : null
+  },
+  "hooking backward counter throw" : {
+    "en" : "Hooking backward counter throw",
+    "jp" : "Kawazugake",
+    "cat" : null
+  },
+  "zubuneri" : {
+    "en" : "",
+    "jp" : "Zubuneri",
     "cat" : null
   },
   "okuri-nage" : {
@@ -342,6 +367,11 @@
   "kotenage" : {
     "en" : "Arm lock throw",
     "jp" : "Kotenage",
+    "cat" : null
+  },
+  "upper arm forceout" : {
+    "en" : "Upper arm forceout",
+    "jp" : "Waridashi",
     "cat" : null
   },
   "one armed shoulder throw" : {
@@ -444,6 +474,11 @@
     "jp" : "Uwatehineri",
     "cat" : null
   },
+  "uchimuso" : {
+    "en" : "Inner thigh propping twist down",
+    "jp" : "Uchimuso",
+    "cat" : null
+  },
   "shitatenage" : {
     "en" : "Underarm throw",
     "jp" : "Shitatenage",
@@ -479,9 +514,19 @@
     "jp" : "Kinjite",
     "cat" : null
   },
+  "waridashi" : {
+    "en" : "Upper arm forceout",
+    "jp" : "Waridashi",
+    "cat" : null
+  },
   "no-technique_en" : {
     "en" : null,
     "jp" : "no-technique_en",
+    "cat" : null
+  },
+  "clasped hand twist down" : {
+    "en" : "Clasped hand twist down",
+    "jp" : "Gasshohineri",
     "cat" : null
   },
   "over thigh scooping body drop" : {
@@ -493,6 +538,11 @@
     "en" : "Pulling over arm throw",
     "jp" : "Uwatedashinage",
     "cat" : "throw"
+  },
+  "gasshohineri" : {
+    "en" : "Clasped hand twist down",
+    "jp" : "Gasshohineri",
+    "cat" : null
   },
   "backward force down" : {
     "en" : "Backward force down",

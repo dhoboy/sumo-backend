@@ -99,6 +99,11 @@
     "jp" : "Kotehineri",
     "cat" : null
   },
+  "osakate" : {
+    "en" : "Backward twisting over arm throw",
+    "jp" : "Osakate",
+    "cat" : null
+  },
   "okuritsuriotoshi" : {
     "en" : "Rear lifting body slam",
     "jp" : "Okuritsuriotoshi",
@@ -207,6 +212,11 @@
   "rear leg trip" : {
     "en" : "Rear leg trip",
     "jp" : "Okurigake",
+    "cat" : null
+  },
+  "nimaigeri" : {
+    "en" : "Ankle kicking twist down",
+    "jp" : "Nimaigeri",
     "cat" : null
   },
   "arm bar throw" : {
@@ -429,6 +439,11 @@
     "jp" : "Kotehineri",
     "cat" : null
   },
+  "okurinage" : {
+    "en" : "Rear throw down",
+    "jp" : "Okurinage",
+    "cat" : null
+  },
   "under shoulder swing down" : {
     "en" : "Under shoulder swing down",
     "jp" : "Katasukashi",
@@ -438,6 +453,11 @@
     "en" : "Over thigh scooping body drop",
     "jp" : "Komatasukui",
     "cat" : "throw"
+  },
+  "ankle kicking twist down" : {
+    "en" : "Ankle kicking twist down",
+    "jp" : "Nimaigeri",
+    "cat" : null
   },
   "backward pivot throw" : {
     "en" : "Backward pivot throw",
@@ -652,6 +672,11 @@
   "ushiromotare" : {
     "en" : "Backward lean out",
     "jp" : "Ushiromotare",
+    "cat" : null
+  },
+  "backward twisting over arm throw" : {
+    "en" : "Backward twisting over arm throw",
+    "jp" : "Osakate",
     "cat" : null
   },
   "harimanage" : {

@@ -1,0 +1,445 @@
+{
+  "play_off" : [ ],
+  "data" : [ {
+    "east" : {
+      "name" : "HOSHORYU",
+      "perform" : "3-2",
+      "image" : "/nhkworld/en/tv/sumo/wrestlers/110/images/hoshoryu_230418.png",
+      "rank" : "Yokozuna",
+      "result" : "lose",
+      "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/110/images/hoshoryu_ja.png"
+    },
+    "seektime" : null,
+    "west" : {
+      "name" : "CHIYOSHOMA",
+      "perform" : "3-2",
+      "image" : "/nhkworld/en/tv/sumo/wrestlers/99/images/chiyoshoma_230418.png",
+      "rank" : "Maegashira #2",
+      "result" : "win",
+      "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/99/images/chiyoshoma_ja.png"
+    },
+    "technique" : "Yorikiri",
+    "technique_en" : "Frontal force out",
+    "technique_category" : "force"
+  }, {
+    "east" : {
+      "name" : "ONOSATO",
+      "perform" : "4-1",
+      "image" : "/nhkworld/en/tv/sumo/wrestlers/157/images/Onosato_20250226.png",
+      "rank" : "Ozeki",
+      "result" : "win",
+      "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/157/images/onosato_ja.png"
+    },
+    "seektime" : null,
+    "west" : {
+      "name" : "TOBIZARU",
+      "perform" : "1-4",
+      "image" : "/nhkworld/en/tv/sumo/wrestlers/108/images/tobizaru_230418.png",
+      "rank" : "Maegashira #3",
+      "result" : "lose",
+      "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/108/images/tobizaru_ja.png"
+    },
+    "technique" : "Oshidashi",
+    "technique_en" : "Frontal push out",
+    "technique_category" : "push"
+  }, {
+    "east" : {
+      "name" : "TAKANOSHO",
+      "perform" : "2-3",
+      "image" : "/nhkworld/en/tv/sumo/wrestlers/88/images/takanosho_230418.png",
+      "rank" : "Maegashira #3",
+      "result" : "win",
+      "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/88/images/takanosho2_ja.png"
+    },
+    "seektime" : 1286,
+    "west" : {
+      "name" : "KOTOZAKURA",
+      "perform" : "2-3",
+      "image" : "/nhkworld/en/tv/sumo/wrestlers/105/images/kotonowaka_230418.png",
+      "rank" : "Ozeki",
+      "result" : "lose",
+      "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/105/images/kotozakura_ja.png"
+    },
+    "technique" : "Oshidashi",
+    "technique_en" : "Frontal push out",
+    "technique_category" : "push"
+  }, {
+    "east" : {
+      "name" : "DAIEISHO",
+      "perform" : "3-2",
+      "image" : "/nhkworld/en/tv/sumo/wrestlers/16/images/daieisho_230418.png",
+      "rank" : "Sekiwake",
+      "result" : "win",
+      "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/32/images/daieisho_ja.png"
+    },
+    "seektime" : null,
+    "west" : {
+      "name" : "WAKAMOTOHARU",
+      "perform" : "3-2",
+      "image" : "/nhkworld/en/tv/sumo/wrestlers/130/images/wakamotoharu_230418.png",
+      "rank" : "Maegashira #1 ",
+      "result" : "lose",
+      "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/130/images/wakamotoharu_ja.png"
+    },
+    "technique" : "Tsukiotoshi",
+    "technique_en" : "Thrust down",
+    "technique_category" : "push"
+  }, {
+    "east" : {
+      "name" : "ABI",
+      "perform" : "3-2",
+      "image" : "/nhkworld/en/tv/sumo/wrestlers/128/images/abi_230418.png",
+      "rank" : "Komusubi",
+      "result" : "lose",
+      "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/128/images/abi_ja.png"
+    },
+    "seektime" : 1120,
+    "west" : {
+      "name" : "OHO",
+      "perform" : "2-3",
+      "image" : "/nhkworld/en/tv/sumo/wrestlers/134/images/oho_230418.png",
+      "rank" : "Sekiwake",
+      "result" : "win",
+      "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/134/images/oho_ja.png"
+    },
+    "technique" : "Oshidashi",
+    "technique_en" : "Frontal push out",
+    "technique_category" : "push"
+  }, {
+    "east" : {
+      "name" : "KIRISHIMA",
+      "perform" : "3-2",
+      "image" : "/nhkworld/en/tv/sumo/wrestlers/92/images/kiribayama_230418.png",
+      "rank" : "Komusubi",
+      "result" : "lose",
+      "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/92/images/kirishima_ja.png"
+    },
+    "seektime" : null,
+    "west" : {
+      "name" : "WAKATAKAKAGE",
+      "perform" : "1-4",
+      "image" : "/nhkworld/en/tv/sumo/wrestlers/100/images/wakatakakage_230418.png",
+      "rank" : "Maegashira #1 ",
+      "result" : "win",
+      "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/100/images/wakatakakage_ja.png"
+    },
+    "technique" : "Yorikiri",
+    "technique_en" : "Frontal force out",
+    "technique_category" : "force"
+  }, {
+    "east" : {
+      "name" : "GONOYAMA",
+      "perform" : "1-4",
+      "image" : "/nhkworld/en/tv/sumo/wrestlers/151/images/gonoyama_230418.png",
+      "rank" : "Maegashira #2",
+      "result" : "lose",
+      "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/151/images/gonoyama_ja.png"
+    },
+    "seektime" : 978,
+    "west" : {
+      "name" : "TAKAYASU",
+      "perform" : "4-1",
+      "image" : "/nhkworld/en/tv/sumo/wrestlers/8/images/takayasu_230418.png",
+      "rank" : "Maegashira #4",
+      "result" : "win",
+      "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/8/images/takayasu_ja.png"
+    },
+    "technique" : "Hatakikomi",
+    "technique_en" : "Slap down",
+    "technique_category" : "dodge"
+  }, {
+    "east" : {
+      "name" : "HIRADOUMI",
+      "perform" : "2-3",
+      "image" : "/nhkworld/en/tv/sumo/wrestlers/143/images/hiradoumi_230418.png",
+      "rank" : "Maegashira #6",
+      "result" : "lose",
+      "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/143/images/hiradoumi_ja.png"
+    },
+    "seektime" : null,
+    "west" : {
+      "name" : "ICHIYAMAMOTO",
+      "perform" : "3-2",
+      "image" : "/nhkworld/en/tv/sumo/wrestlers/129/images/ichiyamamoto_230418.png",
+      "rank" : "Maegashira #4",
+      "result" : "win",
+      "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/129/images/ichiyamamoto_ja.png"
+    },
+    "technique" : "Hikiotoshi",
+    "technique_en" : "Hand pull down",
+    "technique_category" : "dodge"
+  }, {
+    "east" : {
+      "name" : "URA",
+      "perform" : "3-2",
+      "image" : "/nhkworld/en/tv/sumo/wrestlers/125/images/ura_230418.png",
+      "rank" : "Maegashira #5",
+      "result" : "lose",
+      "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/125/images/ura_ja.png"
+    },
+    "seektime" : null,
+    "west" : {
+      "name" : "TAKERUFUJI",
+      "perform" : "3-2",
+      "image" : "/nhkworld/en/tv/sumo/wrestlers/162/images/Takerufuji_20250110.png",
+      "rank" : "Maegashira #6",
+      "result" : "win",
+      "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/162/images/takerufuji_ja.png"
+    },
+    "technique" : "Oshidashi",
+    "technique_en" : "Frontal push out",
+    "technique_category" : "push"
+  }, {
+    "east" : {
+      "name" : "TAMAWASHI",
+      "perform" : "3-2",
+      "image" : "/nhkworld/en/tv/sumo/wrestlers/7/images/tamawashi_230418.png",
+      "rank" : "Maegashira #7",
+      "result" : "lose",
+      "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/7/images/tamawashi_ja.png"
+    },
+    "seektime" : null,
+    "west" : {
+      "name" : "KINBOZAN",
+      "perform" : "2-3",
+      "image" : "/nhkworld/en/tv/sumo/wrestlers/147/images/Kinbozan_20250226.png",
+      "rank" : "Maegashira #5",
+      "result" : "win",
+      "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/147/images/kinbozan_ja.png"
+    },
+    "technique" : "Tsukidashi",
+    "technique_en" : "Frontal thrust out",
+    "technique_category" : "push"
+  }, {
+    "east" : {
+      "name" : "SHODAI",
+      "perform" : "2-3",
+      "image" : "/nhkworld/en/tv/sumo/wrestlers/21/images/shodai_230418.png",
+      "rank" : "Maegashira #7",
+      "result" : "lose",
+      "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/11/images/shodai_ja.png"
+    },
+    "seektime" : 722,
+    "west" : {
+      "name" : "OSHOMA",
+      "perform" : "1-4",
+      "image" : "/nhkworld/en/tv/sumo/wrestlers/146/images/oshoma_230302.png",
+      "rank" : "Maegashira #8",
+      "result" : "win",
+      "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/146/images/oshoma_ja.png"
+    },
+    "technique" : "Yorikiri",
+    "technique_en" : "Frontal force out",
+    "technique_category" : "force"
+  }, {
+    "east" : {
+      "name" : "ATAMIFUJI",
+      "perform" : "3-2",
+      "image" : "/nhkworld/en/tv/sumo/wrestlers/144/images/atamifuji_230706.png",
+      "rank" : "Maegashira #8",
+      "result" : "win",
+      "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/144/images/atamifuji_ja.png"
+    },
+    "seektime" : null,
+    "west" : {
+      "name" : "NISHIKIGI",
+      "perform" : "0-5",
+      "image" : "/nhkworld/en/tv/sumo/wrestlers/103/images/nishikigi_230418.png",
+      "rank" : "Maegashira #10",
+      "result" : "lose",
+      "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/103/images/nishikigi_ja.png"
+    },
+    "technique" : "Oshidashi",
+    "technique_en" : "Frontal push out",
+    "technique_category" : "push"
+  }, {
+    "east" : {
+      "name" : "HAKUOHO",
+      "perform" : "4-1",
+      "image" : "/nhkworld/en/tv/sumo/wrestlers/153/images/Hakuoho_20250110.png",
+      "rank" : "Maegashira #9",
+      "result" : "win",
+      "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/153/images/hakuoho_ja.png"
+    },
+    "seektime" : null,
+    "west" : {
+      "name" : "ENDO",
+      "perform" : "4-1",
+      "image" : "/nhkworld/en/tv/sumo/wrestlers/13/images/endo_230418.png",
+      "rank" : "Maegashira #9",
+      "result" : "lose",
+      "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/20/images/endo_ja.png"
+    },
+    "technique" : "Yorikiri",
+    "technique_en" : "Frontal force out",
+    "technique_category" : "force"
+  }, {
+    "east" : {
+      "name" : "TAKARAFUJI",
+      "perform" : "2-3",
+      "image" : "/nhkworld/en/tv/sumo/wrestlers/19/images/takarafuji_230418.png",
+      "rank" : "Maegashira #12",
+      "result" : "lose",
+      "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/17/images/takarafuji_ja.png"
+    },
+    "seektime" : null,
+    "west" : {
+      "name" : "SHONANNOUMI",
+      "perform" : "1-4",
+      "image" : "/nhkworld/en/tv/sumo/wrestlers/149/images/shonannoumi_230302.png",
+      "rank" : "Maegashira #10",
+      "result" : "win",
+      "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/149/images/shonannoumi_ja.png"
+    },
+    "technique" : "Hatakikomi",
+    "technique_en" : "Slap down",
+    "technique_category" : "dodge"
+  }, {
+    "east" : {
+      "name" : "MIDORIFUJI",
+      "perform" : "2-3",
+      "image" : "/nhkworld/en/tv/sumo/wrestlers/118/images/midorifuji_230418.png",
+      "rank" : "Maegashira #11",
+      "result" : "lose",
+      "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/118/images/midorifuji_ja.png"
+    },
+    "seektime" : null,
+    "west" : {
+      "name" : "MEISEI",
+      "perform" : "3-2",
+      "image" : "/nhkworld/en/tv/sumo/wrestlers/66/images/meisei_230418.png",
+      "rank" : "Maegashira #11",
+      "result" : "win",
+      "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/66/images/meisei_ja.png"
+    },
+    "technique" : "Yorikiri",
+    "technique_en" : "Frontal force out",
+    "technique_category" : "force"
+  }, {
+    "east" : {
+      "name" : "SHISHI",
+      "perform" : "4-1",
+      "image" : "/nhkworld/en/tv/sumo/wrestlers/158/images/shishi_231108.png",
+      "rank" : "Maegashira #13",
+      "result" : "win",
+      "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/158/images/shishi_ukr.png"
+    },
+    "seektime" : null,
+    "west" : {
+      "name" : "ONOKATSU",
+      "perform" : "4-1",
+      "image" : "/nhkworld/en/tv/sumo/wrestlers/168/images/onokatsu_240708.png",
+      "rank" : "Maegashira #12",
+      "result" : "lose",
+      "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/168/images/onokatsu_mng.png"
+    },
+    "technique" : "Yorikiri",
+    "technique_en" : "Frontal force out",
+    "technique_category" : "force"
+  }, {
+    "east" : {
+      "name" : "RYUDEN",
+      "perform" : "3-2",
+      "image" : "/nhkworld/en/tv/sumo/wrestlers/140/images/ryuden_230418.png",
+      "rank" : "Maegashira #14",
+      "result" : "win",
+      "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/140/images/ryuden_ja.png"
+    },
+    "seektime" : 294,
+    "west" : {
+      "name" : "AONISHIKI",
+      "perform" : "2-3",
+      "image" : "/nhkworld/en/tv/sumo/wrestlers/174/images/Aonishiki_20241331.png",
+      "rank" : "Maegashira #15",
+      "result" : "lose",
+      "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/174/images/Aonishiki_ja.png"
+    },
+    "technique" : "Kainahineri",
+    "technique_en" : "2 handed arm twist down",
+    "technique_category" : "throw"
+  }, {
+    "east" : {
+      "name" : "ASAKORYU",
+      "perform" : "3-2",
+      "image" : "/nhkworld/en/tv/sumo/wrestlers/163/images/asakoryu_240305.png",
+      "rank" : "Maegashira #16",
+      "result" : "lose",
+      "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/163/images/asakoryu_ja.png"
+    },
+    "seektime" : null,
+    "west" : {
+      "name" : "CHURANOUMI",
+      "perform" : "4-1",
+      "image" : "/nhkworld/en/tv/sumo/wrestlers/119/images/churanoumi_220830.png",
+      "rank" : "Maegashira #14",
+      "result" : "win",
+      "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/119/images/churanoumi_ja.png"
+    },
+    "technique" : "Okuridashi",
+    "technique_en" : "Rear push out",
+    "technique_category" : "push"
+  }, {
+    "east" : {
+      "name" : "SHIROKUMA",
+      "perform" : "1-4",
+      "image" : "/nhkworld/en/tv/sumo/wrestlers/160/images/shirokuma_240520.png",
+      "rank" : "Maegashira #17",
+      "result" : "lose",
+      "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/160/images/shirokuma_ja.png"
+    },
+    "seektime" : null,
+    "west" : {
+      "name" : "SADANOUMI",
+      "perform" : "2-3",
+      "image" : "/nhkworld/en/tv/sumo/wrestlers/59/images/sadanoumi_230418.png",
+      "rank" : "Maegashira #15",
+      "result" : "win",
+      "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/59/images/sadanoumi_ja.png"
+    },
+    "technique" : "Sotogake",
+    "technique_en" : "Outside leg trip",
+    "technique_category" : null
+  }, {
+    "east" : {
+      "name" : "TOKIHAYATE",
+      "perform" : "3-2",
+      "image" : "/nhkworld/en/tv/sumo/wrestlers/159/images/tokihayate_240301.png",
+      "rank" : "Maegashira #18",
+      "result" : "lose",
+      "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/159/images/tokihayate_ja.png"
+    },
+    "seektime" : null,
+    "west" : {
+      "name" : "KOTOSHOHO",
+      "perform" : "3-2",
+      "image" : "/nhkworld/en/tv/sumo/wrestlers/106/images/kotoshoho_230418.png",
+      "rank" : "Maegashira #16",
+      "result" : "win",
+      "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/106/images/kotoshoho_ja.png"
+    },
+    "technique" : "Uwatenage",
+    "technique_en" : "Over arm throw",
+    "technique_category" : null
+  }, {
+    "east" : {
+      "name" : "MITAKEUMI",
+      "perform" : "3-2",
+      "image" : "/nhkworld/en/tv/sumo/wrestlers/10/images/mitakeumi_230418.png",
+      "rank" : "Maegashira #17",
+      "result" : "win",
+      "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/10/images/mitakeumi_ja.png"
+    },
+    "seektime" : null,
+    "west" : {
+      "name" : "KAYO",
+      "perform" : "2-3",
+      "image" : "/nhkworld/en/tv/sumo/wrestlers/171/images/kayo_240708.png",
+      "rank" : "Juryo #2",
+      "result" : "lose",
+      "name_ja" : "/nhkworld/en/tv/sumo/wrestlers/171/images/kayo_ja.png"
+    },
+    "technique" : "Yorikiri",
+    "technique_en" : "Frontal force out",
+    "technique_category" : "force"
+  } ]
+}

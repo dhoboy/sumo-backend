@@ -534,6 +534,11 @@
     "jp" : "Kinjite",
     "cat" : null
   },
+  "rear step out" : {
+    "en" : "Rear step out",
+    "jp" : "Fumidashi",
+    "cat" : null
+  },
   "waridashi" : {
     "en" : "Upper arm forceout",
     "jp" : "Waridashi",
@@ -722,6 +727,11 @@
   "isamiashi" : {
     "en" : "Forward step out",
     "jp" : "Isamiashi",
+    "cat" : null
+  },
+  "fumidashi" : {
+    "en" : "Rear step out",
+    "jp" : "Fumidashi",
     "cat" : null
   }
 }

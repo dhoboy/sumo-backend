@@ -9,7 +9,7 @@
 ;; Namespace that connects to and manages MySql database
 ;;
 
-(def key-file "./keys/mysql.json")
+(def db-file "data.db")
 
 
 ;; Rather than opening a new connection for each query, it's more efficient
@@ -30,12 +30,10 @@
     #_{:clj-kondo/ignore [:unresolved-symbol]} ; clj-kondo doesn't like the when-let-all
     (when-let-all [db-keys (:local (parse-string (slurp key-file) true))
                    conn (c3p0/make-datasource-spec
-                          {:classname "com.mysql.cj.jdbc.Driver" ; "com.mysql.jdbc.Driver"
-                           :subprotocol "mysql"
+                          {:classname "org.sqlite.JDBC"
+                           :subprotocol "sqlite"
                            :initial-pool-size 3
-                           :subname "//127.0.0.1:3306/sumo?characterEncoding=utf8"
-                           :user (:user db-keys)
-                           :password (:password db-keys)})]
+                           :subname filepath})]
       (reset! db-atom conn)
       conn)))
 
